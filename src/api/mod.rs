@@ -221,15 +221,30 @@ mod mv_exclusive_rcmd;
 
 // ---- 电台相关 ----
 mod dj_banner;
+mod dj_category_excludehot;
+mod dj_category_recommend;
 mod dj_catelist;
 mod dj_detail;
 mod dj_hot;
+mod dj_paygift;
+mod dj_personalize_recommend;
 mod dj_program;
 mod dj_program_detail;
+mod dj_program_toplist;
+mod dj_program_toplist_hours;
+mod dj_radio_hot;
+mod dj_radio_top;
 mod dj_recommend;
+mod dj_recommend_type;
 mod dj_sub;
 mod dj_sublist;
+mod dj_subscriber;
+mod dj_today_perfered;
 mod dj_toplist;
+mod dj_toplist_hours;
+mod dj_toplist_newcomer;
+mod dj_toplist_pay;
+mod dj_toplist_popular;
 
 // ---- 相似推荐 ----
 mod simi_artist;

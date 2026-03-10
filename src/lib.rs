@@ -10,6 +10,9 @@ pub mod request;
 pub mod api;
 pub mod error;
 
+#[cfg(feature = "server")]
+pub mod server;
+
 pub use error::NcmError;
 pub use request::{ApiClient, ApiResponse, RequestOption, CryptoType};
 pub use api::Query;

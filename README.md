@@ -31,6 +31,7 @@
 - **统一的参数模式** - 所有接口使用 `Query` 对象传参，用法简洁一致
 - **代理支持** - 支持 HTTP / SOCKS5 代理
 - **IP 伪装** - 支持 realIP 和 randomCNIP 功能
+- **HTTP 服务模式** - 内置 Axum HTTP 服务器，可直接替代 Node.js 版提供 REST API
 
 ## 快速开始
 
@@ -201,6 +202,105 @@ query.proxy = Some("http://121.196.226.246:84".to_string());
 // query.proxy = Some("socks5://127.0.0.1:1080".to_string());
 let result = client.song_url(&query).await?;
 ```
+
+---
+
+## HTTP 服务模式
+
+除了作为 Rust 库直接调用，本项目还支持以 HTTP 服务器模式运行，提供与 Node.js 版本完全兼容的 REST API 接口，前端可以无缝切换。
+
+### 启动服务器
+
+```bash
+# 编译并运行（默认监听 0.0.0.0:3000）
+cargo run --features server --bin ncm-server
+
+# 或先编译再运行
+cargo build --release --features server --bin ncm-server
+./target/release/ncm-server
+```
+
+### 环境变量配置
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `NCM_HOST` | 监听地址 | `0.0.0.0` |
+| `NCM_PORT` | 监听端口 | `3000` |
+| `CORS_ALLOW_ORIGIN` | CORS 允许的 Origin | `*`（允许所有） |
+
+```bash
+# 示例：自定义端口和 CORS
+NCM_HOST=127.0.0.1 NCM_PORT=8080 CORS_ALLOW_ORIGIN=http://localhost:5173 cargo run --features server --bin ncm-server
+```
+
+### 前端调用示例
+
+接口路径与 Node.js 版完全一致，方法名中的下划线 `_` 转换为斜杠 `/`：
+
+```js
+// 搜索歌曲
+const res = await axios.get('/cloudsearch', { params: { keywords: '海阔天空' } })
+
+// 获取歌曲详情
+const res = await axios.get('/song/detail', { params: { ids: '347230' } })
+
+// POST 方式调用
+const res = await axios.post('/login/cellphone', {
+  phone: '138xxxx8000',
+  password: 'xxx',
+})
+
+// 带 Cookie 调用需要登录的接口
+const res = await axios.get('/user/playlist', {
+  params: { uid: '32953014', cookie: 'MUSIC_U=xxx' },
+})
+```
+
+### 路由映射规则
+
+| 方法名 | HTTP 路由 | 说明 |
+|--------|-----------|------|
+| `song_detail` | `/song/detail` | 下划线转斜杠（默认规则） |
+| `login_cellphone` | `/login/cellphone` | 同上 |
+| `daily_signin` | `/daily_signin` | 特殊路由，保留下划线 |
+| `fm_trash` | `/fm_trash` | 特殊路由，保留下划线 |
+| `personal_fm` | `/personal_fm` | 特殊路由，保留下划线 |
+| `avatar_upload` | `/avatar/upload` | POST multipart/form-data |
+| `voice_upload` | `/voice/upload` | POST multipart/form-data |
+
+所有路由均支持 GET 和 POST 两种请求方式（上传接口仅 POST）。
+
+### 作为库集成到你的项目
+
+如果你已有 Axum 项目，可以直接集成路由：
+
+```rust
+use ncm_api::{create_client, server::{build_app, build_app_with_config, ServerConfig}};
+
+// 方式一：快速构建
+let app = build_app(create_client(None));
+
+// 方式二：自定义配置
+let config = ServerConfig {
+    host: "127.0.0.1".to_string(),
+    port: 8080,
+    cors_origin: Some("http://localhost:5173".to_string()),
+};
+let app = build_app_with_config(create_client(None), &config);
+
+// 启动
+let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
+axum::serve(listener, app).await?;
+```
+
+### 自动路由注册
+
+新增 API 时无需手动注册路由。`build.rs` 会在编译期自动扫描 `src/api/mod.rs` 中的模块声明，生成对应的路由注册代码。只需：
+
+1. 创建 `src/api/xxx_yyy.rs` 文件，实现 `ApiClient` 方法
+2. 在 `src/api/mod.rs` 中添加 `mod xxx_yyy;`
+
+路由 `/xxx/yyy` 会自动注册，无需其他操作。
 
 ---
 
