@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌曲下载链接 v1
 /// 对应 Node.js module/song_download_url_v1.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌曲下载链接 v1

@@ -1,7 +1,6 @@
 /// 请求模块 - 对应 Node.js 版本的 util/request.js
 ///
 /// 核心功能：构造加密请求、Cookie 管理、UA 伪装
-
 use crate::crypto;
 use crate::error::{NcmError, Result};
 use crate::util::config::*;
@@ -31,7 +30,10 @@ static DOMAIN_REGEX: LazyLock<regex_lite::Regex> =
 fn header_value(s: &str) -> HeaderValue {
     HeaderValue::from_str(s).unwrap_or_else(|_| {
         // 过滤掉非 ASCII 可见字符
-        let safe: String = s.chars().filter(|c| c.is_ascii() && !c.is_ascii_control()).collect();
+        let safe: String = s
+            .chars()
+            .filter(|c| c.is_ascii() && !c.is_ascii_control())
+            .collect();
         HeaderValue::from_str(&safe).unwrap_or_else(|_| HeaderValue::from_static(""))
     })
 }
@@ -165,16 +167,13 @@ impl ApiClient {
         let mut headers = HeaderMap::new();
 
         // IP 伪装
-        let ip = options
-            .real_ip
-            .clone()
-            .or_else(|| {
-                if options.random_cn_ip {
-                    Some(generate_random_chinese_ip())
-                } else {
-                    None
-                }
-            });
+        let ip = options.real_ip.clone().or_else(|| {
+            if options.random_cn_ip {
+                Some(generate_random_chinese_ip())
+            } else {
+                None
+            }
+        });
 
         if let Some(ref ip) = ip {
             if let (Ok(real_ip), Ok(fwd)) = (HeaderValue::from_str(ip), HeaderValue::from_str(ip)) {
@@ -246,10 +245,7 @@ impl ApiClient {
             }
         }
 
-        headers.insert(
-            COOKIE,
-            header_value(&cookie_obj_to_string(&cookie_map)),
-        );
+        headers.insert(COOKIE, header_value(&cookie_obj_to_string(&cookie_map)));
 
         // 确定加密方式
         let crypto_type = if options.crypto == CryptoType::Eapi && !ENCRYPT {
@@ -263,18 +259,12 @@ impl ApiClient {
         let encrypt_data: HashMap<String, String>;
         let domain = options.domain.as_deref().unwrap_or("");
 
-        let csrf_token = cookie_map
-            .get("__csrf")
-            .cloned()
-            .unwrap_or_default();
+        let csrf_token = cookie_map.get("__csrf").cloned().unwrap_or_default();
 
         match crypto_type {
             CryptoType::Weapi => {
                 let ref_domain = if domain.is_empty() { DOMAIN } else { domain };
-                headers.insert(
-                    REFERER,
-                    header_value(ref_domain),
-                );
+                headers.insert(REFERER, header_value(ref_domain));
                 let ua = options
                     .ua
                     .as_deref()
@@ -305,22 +295,58 @@ impl ApiClient {
                 // 构造 eapi header cookie
                 let now_secs = chrono::Utc::now().timestamp().to_string();
                 let request_id = format!(
-                    "{}_{}",
+                    "{}_{:04}",
                     chrono::Utc::now().timestamp_millis(),
-                    format!("{:04}", rand::random::<u16>() % 1000)
+                    rand::random::<u16>() % 1000
                 );
 
                 let mut header_map: HashMap<String, String> = HashMap::new();
-                header_map.insert("osver".to_string(), cookie_map.get("osver").cloned().unwrap_or_default());
-                header_map.insert("deviceId".to_string(), cookie_map.get("deviceId").cloned().unwrap_or_default());
-                header_map.insert("os".to_string(), cookie_map.get("os").cloned().unwrap_or_default());
-                header_map.insert("appver".to_string(), cookie_map.get("appver").cloned().unwrap_or_default());
-                header_map.insert("versioncode".to_string(), cookie_map.get("versioncode").cloned().unwrap_or_else(|| "140".to_string()));
-                header_map.insert("mobilename".to_string(), cookie_map.get("mobilename").cloned().unwrap_or_default());
-                header_map.insert("buildver".to_string(), cookie_map.get("buildver").cloned().unwrap_or_else(|| now_secs[..10].to_string()));
-                header_map.insert("resolution".to_string(), cookie_map.get("resolution").cloned().unwrap_or_else(|| "1920x1080".to_string()));
+                header_map.insert(
+                    "osver".to_string(),
+                    cookie_map.get("osver").cloned().unwrap_or_default(),
+                );
+                header_map.insert(
+                    "deviceId".to_string(),
+                    cookie_map.get("deviceId").cloned().unwrap_or_default(),
+                );
+                header_map.insert(
+                    "os".to_string(),
+                    cookie_map.get("os").cloned().unwrap_or_default(),
+                );
+                header_map.insert(
+                    "appver".to_string(),
+                    cookie_map.get("appver").cloned().unwrap_or_default(),
+                );
+                header_map.insert(
+                    "versioncode".to_string(),
+                    cookie_map
+                        .get("versioncode")
+                        .cloned()
+                        .unwrap_or_else(|| "140".to_string()),
+                );
+                header_map.insert(
+                    "mobilename".to_string(),
+                    cookie_map.get("mobilename").cloned().unwrap_or_default(),
+                );
+                header_map.insert(
+                    "buildver".to_string(),
+                    cookie_map
+                        .get("buildver")
+                        .cloned()
+                        .unwrap_or_else(|| now_secs[..10].to_string()),
+                );
+                header_map.insert(
+                    "resolution".to_string(),
+                    cookie_map
+                        .get("resolution")
+                        .cloned()
+                        .unwrap_or_else(|| "1920x1080".to_string()),
+                );
                 header_map.insert("__csrf".to_string(), csrf_token.clone());
-                header_map.insert("channel".to_string(), cookie_map.get("channel").cloned().unwrap_or_default());
+                header_map.insert(
+                    "channel".to_string(),
+                    cookie_map.get("channel").cloned().unwrap_or_default(),
+                );
                 header_map.insert("requestId".to_string(), request_id);
 
                 if options.check_token {
@@ -348,7 +374,11 @@ impl ApiClient {
                     .unwrap_or_else(|| choose_user_agent("api", "iphone"));
                 headers.insert(USER_AGENT, header_value(ua));
 
-                let api_domain = if domain.is_empty() { API_DOMAIN } else { domain };
+                let api_domain = if domain.is_empty() {
+                    API_DOMAIN
+                } else {
+                    domain
+                };
 
                 if crypto_type == CryptoType::Eapi {
                     // 注入 header 和 e_r
@@ -400,9 +430,19 @@ impl ApiClient {
                 .proxy(proxy)
                 .build()
                 .map_err(NcmError::Http)?;
-            proxy_client.post(&url).headers(headers).body(body).send().await?
+            proxy_client
+                .post(&url)
+                .headers(headers)
+                .body(body)
+                .send()
+                .await?
         } else {
-            self.client.post(&url).headers(headers).body(body).send().await?
+            self.client
+                .post(&url)
+                .headers(headers)
+                .body(body)
+                .send()
+                .await?
         };
 
         // 处理响应 cookie
@@ -432,7 +472,10 @@ impl ApiClient {
 
         let mut status = body
             .get("code")
-            .and_then(|c| c.as_i64().or_else(|| c.as_str().and_then(|s| s.parse().ok())))
+            .and_then(|c| {
+                c.as_i64()
+                    .or_else(|| c.as_str().and_then(|s| s.parse().ok()))
+            })
             .unwrap_or(status_code);
 
         // 特殊状态码视为 200
@@ -454,15 +497,13 @@ impl ApiClient {
         if status == 200 {
             Ok(answer)
         } else {
-            Err(NcmError::Api {
-                code: status,
-                msg: answer
-                    .body
-                    .get("msg")
-                    .and_then(|m| m.as_str())
-                    .unwrap_or("Unknown error")
-                    .to_string(),
-            })
+            let msg = answer
+                .body
+                .get("msg")
+                .and_then(|m| m.as_str())
+                .unwrap_or("Unknown error")
+                .to_string();
+            Err(NcmError::from_api(status, msg))
         }
     }
 }

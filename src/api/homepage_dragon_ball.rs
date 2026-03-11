@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 首页-发现 dragon ball
 /// 对应 Node.js module/homepage_dragon_ball.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 首页-发现 dragon ball（需要登录或游客登录）

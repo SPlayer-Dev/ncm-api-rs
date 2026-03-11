@@ -1,12 +1,12 @@
+use super::Query;
+use crate::error::Result;
 /// 上传音频（声音）
 /// 对应 Node.js module/voice_upload.js
 ///
 /// 注意: 此端点涉及复杂的分块上传流程（multipart upload 到 NOS 对象存储）。
 /// 由于 Rust SDK 是纯库，文件读取由调用者负责，需传入完整的音频二进制数据。
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 上传音频文件
@@ -38,10 +38,7 @@ impl ApiClient {
         let mimetype = file_mimetype.unwrap_or("audio/mpeg");
 
         // 提取文件扩展名
-        let ext = file_name
-            .rsplit('.')
-            .next()
-            .unwrap_or("mp3");
+        let ext = file_name.rsplit('.').next().unwrap_or("mp3");
 
         // 推断文件名
         let filename = if let Some(name) = query.get("songName") {
@@ -49,7 +46,7 @@ impl ApiClient {
         } else {
             file_name
                 .rsplit('.')
-                .last()
+                .next_back()
                 .unwrap_or(file_name)
                 .replace(' ', "")
                 .replace('.', "_")
@@ -74,21 +71,13 @@ impl ApiClient {
             .await?;
 
         let result = &token_res.body["result"];
-        let object_key_raw = result["objectKey"]
-            .as_str()
-            .unwrap_or_default();
+        let object_key_raw = result["objectKey"].as_str().unwrap_or_default();
         let object_key = object_key_raw.replace('/', "%2F");
-        let token = result["token"]
-            .as_str()
-            .unwrap_or_default()
-            .to_string();
+        let token = result["token"].as_str().unwrap_or_default().to_string();
         let doc_id = result["docId"].clone();
 
         // Step 2: 初始化 multipart upload
-        let init_url = format!(
-            "https://ymusic.nos-hz.163yun.com/{}?uploads",
-            object_key
-        );
+        let init_url = format!("https://ymusic.nos-hz.163yun.com/{}?uploads", object_key);
 
         let init_res = self
             .client
@@ -242,8 +231,8 @@ fn generate_dupkey() -> String {
     let mut rng = rand::thread_rng();
     let mut s = [0u8; 36];
 
-    for i in 0..36 {
-        s[i] = hex_digits[rng.gen_range(0..16)];
+    for item in &mut s {
+        *item = hex_digits[rng.gen_range(0..16)];
     }
     s[14] = b'4';
     s[19] = hex_digits[((s[19] & 0x3) | 0x8) as usize];

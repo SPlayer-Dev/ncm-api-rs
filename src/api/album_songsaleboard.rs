@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 数字专辑&数字单曲-榜单
 /// 对应 Node.js module/album_songsaleboard.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 数字专辑&数字单曲-榜单
@@ -21,11 +21,7 @@ impl ApiClient {
         }
 
         let url = format!("/api/feealbum/songsaleboard/{}/type", sale_type);
-        self.request(
-            &url,
-            data,
-            query.to_option(CryptoType::Weapi),
-        )
-        .await
+        self.request(&url, data, query.to_option(CryptoType::Weapi))
+            .await
     }
 }

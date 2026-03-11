@@ -2,23 +2,23 @@
 ///
 /// 每个 API 接口拆分为独立文件，通过 `impl ApiClient` 扩展方法
 /// 所有方法统一使用 `Query` 对象传参
-
 use crate::request::{CryptoType, RequestOption};
 use std::collections::HashMap;
 
 // ---- 歌曲相关 ----
+mod check_music;
+mod like;
+mod likelist;
+mod lyric;
+mod lyric_new;
+mod scrobble;
+mod song_chorus;
 mod song_detail;
-mod song_url;
-mod song_url_v1;
-mod song_url_v1_302;
-mod song_url_ncmget;
-mod song_url_match;
+mod song_downlist;
 mod song_download_url;
 mod song_download_url_v1;
-mod song_like_check;
-mod song_chorus;
-mod song_downlist;
 mod song_dynamic_cover;
+mod song_like_check;
 mod song_lyrics_mark;
 mod song_lyrics_mark_add;
 mod song_lyrics_mark_del;
@@ -29,127 +29,126 @@ mod song_order_update;
 mod song_purchased;
 mod song_red_count;
 mod song_singledownlist;
+mod song_url;
+mod song_url_match;
+mod song_url_ncmget;
+mod song_url_v1;
+mod song_url_v1_302;
 mod song_wiki_summary;
-mod lyric;
-mod lyric_new;
-mod check_music;
-mod like;
-mod likelist;
-mod scrobble;
 
 // ---- 搜索相关 ----
 mod cloudsearch;
 mod search;
 mod search_default;
-mod search_suggest;
-mod search_hot_detail;
-mod search_multimatch;
 mod search_hot;
+mod search_hot_detail;
 mod search_match;
+mod search_multimatch;
+mod search_suggest;
 
 // ---- 听歌识曲 ----
 mod audio_match;
 
 // ---- 歌单相关 ----
-mod user_playlist;
-mod playlist_detail;
-mod playlist_track_all;
+mod playlist_category_list;
 mod playlist_catlist;
+mod playlist_cover_update;
 mod playlist_create;
 mod playlist_delete;
-mod playlist_highquality_tags;
-mod playlist_hot;
-mod playlist_order_update;
-mod playlist_subscribe;
-mod playlist_subscribers;
-mod playlist_tracks;
-mod playlist_track_add;
-mod playlist_track_delete;
-mod playlist_update;
-mod playlist_category_list;
-mod playlist_cover_update;
 mod playlist_desc_update;
+mod playlist_detail;
 mod playlist_detail_dynamic;
 mod playlist_detail_rcmd_get;
+mod playlist_highquality_tags;
+mod playlist_hot;
 mod playlist_import_name_task_create;
 mod playlist_import_task_status;
 mod playlist_mylike;
 mod playlist_name_update;
+mod playlist_order_update;
 mod playlist_privacy;
+mod playlist_subscribe;
+mod playlist_subscribers;
 mod playlist_tags_update;
+mod playlist_track_add;
+mod playlist_track_all;
+mod playlist_track_delete;
+mod playlist_tracks;
+mod playlist_update;
 mod playlist_update_playcount;
 mod playlist_video_recent;
+mod user_playlist;
 
 // ---- 歌手相关 ----
+mod artist_album;
+mod artist_desc;
 mod artist_detail;
 mod artist_detail_dynamic;
 mod artist_fans;
 mod artist_follow_count;
+mod artist_list;
+mod artist_mv;
 mod artist_new_mv;
 mod artist_new_song;
 mod artist_songs;
-mod artist_album;
-mod artist_desc;
-mod artist_list;
-mod artist_mv;
 mod artist_sub;
 mod artist_sublist;
 mod artist_top_song;
-mod artists;
 mod artist_video;
+mod artists;
 
 // ---- 专辑相关 ----
 mod album;
 mod album_detail;
 mod album_detail_dynamic;
-mod album_sub;
-mod album_sublist;
-mod album_newest;
 mod album_list;
 mod album_list_style;
 mod album_new;
+mod album_newest;
 mod album_privilege;
 mod album_songsaleboard;
+mod album_sub;
+mod album_sublist;
 
 // ---- 评论相关 ----
 mod comment;
-mod comment_new;
-mod comment_info_list;
-mod comment_music;
 mod comment_album;
-mod comment_mv;
-mod comment_playlist;
-mod comment_video;
-mod comment_floor;
-mod comment_hot;
-mod comment_like;
-mod comment_hug_list;
 mod comment_dj;
 mod comment_event;
+mod comment_floor;
+mod comment_hot;
+mod comment_hug_list;
+mod comment_info_list;
+mod comment_like;
+mod comment_music;
+mod comment_mv;
+mod comment_new;
+mod comment_playlist;
+mod comment_video;
 
 // ---- 推荐相关 ----
-mod recommend_songs;
-mod recommend_resource;
-mod recommend_songs_dislike;
-mod personalized;
-mod personalized_newsong;
 mod history_recommend_songs;
 mod history_recommend_songs_detail;
+mod personalized;
 mod personalized_djprogram;
 mod personalized_mv;
+mod personalized_newsong;
 mod personalized_privatecontent;
 mod personalized_privatecontent_list;
 mod program_recommend;
+mod recommend_resource;
+mod recommend_songs;
+mod recommend_songs_dislike;
 
 // ---- 登录相关 ----
 mod activate_init_profile;
 mod login;
 mod login_cellphone;
-mod login_status;
-mod login_qr_key;
 mod login_qr_check;
 mod login_qr_create;
+mod login_qr_key;
 mod login_refresh;
+mod login_status;
 mod logout;
 mod register_anonimous;
 mod register_cellphone;
@@ -163,15 +162,25 @@ mod verify_get_qr;
 mod verify_qrcodestatus;
 
 // ---- 用户相关 ----
-mod user_detail;
-mod user_detail_new;
+mod follow;
+mod get_userids;
+mod rebind;
+mod setting;
 mod user_account;
 mod user_audio;
 mod user_binding;
 mod user_bindingcellphone;
+mod user_cloud;
+mod user_cloud_del;
+mod user_cloud_detail;
 mod user_comment_history;
+mod user_detail;
+mod user_detail_new;
 mod user_dj;
+mod user_event;
 mod user_follow_mixed;
+mod user_followeds;
+mod user_follows;
 mod user_level;
 mod user_medal;
 mod user_mutualfollow_get;
@@ -185,21 +194,11 @@ mod user_social_status_rcmd;
 mod user_social_status_support;
 mod user_subcount;
 mod user_update;
-mod user_follows;
-mod user_followeds;
-mod user_event;
-mod user_cloud;
-mod user_cloud_del;
-mod user_cloud_detail;
-mod follow;
-mod get_userids;
-mod rebind;
-mod setting;
 
 // ---- 私人 FM ----
+mod fm_trash;
 mod personal_fm;
 mod personal_fm_mode;
-mod fm_trash;
 
 // ---- Banner ----
 mod banner;
@@ -212,12 +211,12 @@ mod signin_progress;
 // ---- MV 相关 ----
 mod mv_all;
 mod mv_detail;
+mod mv_detail_info;
+mod mv_exclusive_rcmd;
 mod mv_first;
 mod mv_sub;
 mod mv_sublist;
 mod mv_url;
-mod mv_detail_info;
-mod mv_exclusive_rcmd;
 
 // ---- 电台相关 ----
 mod dj_banner;
@@ -254,10 +253,6 @@ mod simi_song;
 mod simi_user;
 
 // ---- 排行榜 ----
-mod toplist;
-mod toplist_artist;
-mod toplist_detail;
-mod toplist_detail_v2;
 mod top_album;
 mod top_artists;
 mod top_list;
@@ -265,6 +260,10 @@ mod top_mv;
 mod top_playlist;
 mod top_playlist_highquality;
 mod top_song;
+mod toplist;
+mod toplist_artist;
+mod toplist_detail;
+mod toplist_detail_v2;
 
 // ---- 视频相关 ----
 mod video_category_list;
@@ -417,15 +416,15 @@ mod listentogether_sync_list_command;
 mod listentogether_sync_playlist_get;
 
 // ---- VIP 相关 ----
+mod vip_growthpoint;
+mod vip_growthpoint_details;
+mod vip_growthpoint_get;
 mod vip_info;
 mod vip_info_v2;
 mod vip_sign;
 mod vip_sign_info;
 mod vip_tasks;
 mod vip_timemachine;
-mod vip_growthpoint;
-mod vip_growthpoint_details;
-mod vip_growthpoint_get;
 
 // ---- 云贝相关 ----
 mod yunbei;
@@ -445,26 +444,27 @@ mod cloud;
 mod cloud_import;
 mod cloud_lyric_get;
 mod cloud_match;
-mod cloud_upload_token;
 mod cloud_upload_complete;
+mod cloud_upload_token;
 
 // ---- EAPI 工具 ----
 mod eapi_decrypt;
 
 // ---- 其他 ----
+#[allow(clippy::module_inception)]
 mod api;
 mod batch;
 mod calendar;
 mod homepage_block_page;
 mod homepage_dragon_ball;
+mod hug_comment;
 mod inner_version;
+mod pl_count;
 mod playmode_intelligence_list;
 mod playmode_song_vector;
-mod pl_count;
 mod related_allvideo;
 mod related_playlist;
 mod starpick_comments_summary;
-mod hug_comment;
 mod weblog;
 
 // ---- 上传相关 ----
@@ -516,6 +516,27 @@ impl Query {
             .get(key)
             .cloned()
             .unwrap_or_else(|| default.to_string())
+    }
+
+    /// 获取 i64 参数，解析失败返回默认值
+    ///
+    /// 替代 `query.get_or("limit", "30").parse::<i64>().unwrap_or(30)` 模式
+    pub fn get_i64(&self, key: &str, default: i64) -> i64 {
+        match self.params.get(key) {
+            Some(v) => v.parse::<i64>().unwrap_or(default),
+            None => default,
+        }
+    }
+
+    /// 获取 bool 参数（接受 "true"/"false"/"1"/"0"）
+    ///
+    /// 替代 `query.get_or("like", "true") == "true"` 模式
+    pub fn get_bool(&self, key: &str, default: bool) -> bool {
+        match self.params.get(key).map(|s| s.as_str()) {
+            Some("true") | Some("1") => true,
+            Some("false") | Some("0") => false,
+            _ => default,
+        }
     }
 
     /// 构造 RequestOption

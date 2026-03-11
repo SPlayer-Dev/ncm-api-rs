@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 相关视频
 /// 对应 Node.js module/related_allvideo.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 相关视频

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 黑胶乐签打卡
 /// 对应 Node.js module/vip_sign.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 黑胶乐签打卡

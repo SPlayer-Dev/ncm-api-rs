@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌单所有歌曲
 /// 对应 Node.js module/playlist_track_all.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌单所有歌曲（两步请求：先获取 trackIds，再获取歌曲详情）

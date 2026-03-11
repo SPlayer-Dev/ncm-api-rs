@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 音乐人歌曲播放趋势
 /// 对应 Node.js module/musician_play_trend.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 音乐人歌曲播放趋势

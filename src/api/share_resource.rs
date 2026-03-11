@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 分享歌曲到动态
 /// 对应 Node.js module/share_resource.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 分享歌曲到动态
@@ -14,7 +14,11 @@ impl ApiClient {
             "msg": query.get_or("msg", ""),
             "id": query.get_or("id", "")
         });
-        self.request("/api/share/friends/resource", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/share/friends/resource",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 刷新登录
 /// 对应 Node.js module/login_refresh.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 刷新登录

@@ -1,12 +1,12 @@
+use super::Query;
+use crate::error::Result;
 /// 匿名注册
 /// 对应 Node.js module/register_anonimous.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use crate::util::device::generate_device_id;
 use base64::{engine::general_purpose::STANDARD, Engine};
-use md5::{Md5, Digest};
+use md5::{Digest, Md5};
 use serde_json::json;
-use super::Query;
 
 const ID_XOR_KEY_1: &str = "3go8&$8*3*3h0k(2)2";
 
@@ -33,12 +33,13 @@ impl ApiClient {
         let data = json!({
             "username": encoded_id
         });
-        let result = self.request(
-            "/api/register/anonimous",
-            data,
-            query.to_option(CryptoType::Weapi),
-        )
-        .await?;
+        let result = self
+            .request(
+                "/api/register/anonimous",
+                data,
+                query.to_option(CryptoType::Weapi),
+            )
+            .await?;
         Ok(result)
     }
 }

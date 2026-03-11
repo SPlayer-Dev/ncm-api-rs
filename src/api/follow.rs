@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 关注/取消关注用户
 /// 对应 Node.js module/follow.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 关注/取消关注用户

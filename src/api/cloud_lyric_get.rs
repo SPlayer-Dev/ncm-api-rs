@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 获取云盘歌词
 /// 对应 Node.js module/cloud_lyric_get.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取云盘歌词

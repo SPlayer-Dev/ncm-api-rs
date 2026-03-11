@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 回忆坐标
 /// 对应 Node.js module/music_first_listen_info.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 回忆坐标

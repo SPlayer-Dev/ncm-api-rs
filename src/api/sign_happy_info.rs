@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 签到快乐信息
 /// 对应 Node.js module/sign_happy_info.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 签到快乐信息

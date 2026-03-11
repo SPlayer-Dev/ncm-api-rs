@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 声音搜索
 /// 对应 Node.js module/voicelist_list_search.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 声音搜索
@@ -18,7 +18,11 @@ impl ApiClient {
             "voiceFeeType": query.get("voiceFeeType").unwrap_or(""),
             "radioId": query.get_or("voiceListId", "")
         });
-        self.request("/api/voice/workbench/voice/list", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/voice/workbench/voice/list",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

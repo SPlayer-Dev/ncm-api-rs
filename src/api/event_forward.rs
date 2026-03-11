@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 转发动态
 /// 对应 Node.js module/event_forward.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 转发动态
@@ -14,7 +14,11 @@ impl ApiClient {
             "id": query.get_or("evId", "0"),
             "eventUserId": query.get_or("uid", "0")
         });
-        self.request("/api/event/forward", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/event/forward",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

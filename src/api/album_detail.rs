@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 数字专辑详情
 /// 对应 Node.js module/album_detail.js / digitalAlbum_detail.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 数字专辑详情

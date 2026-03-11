@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 更新歌曲顺序
 /// 对应 Node.js module/song_order_update.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 更新歌曲顺序
@@ -14,7 +14,11 @@ impl ApiClient {
             "trackIds": query.get_or("ids", ""),
             "op": "update",
         });
-        self.request("/api/playlist/manipulate/tracks", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/playlist/manipulate/tracks",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

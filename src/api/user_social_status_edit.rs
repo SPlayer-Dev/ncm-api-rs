@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 用户状态 - 编辑
 /// 对应 Node.js module/user_social_status_edit.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 用户状态 - 编辑

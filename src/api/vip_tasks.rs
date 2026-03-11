@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 会员任务
 /// 对应 Node.js module/vip_tasks.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 会员任务列表

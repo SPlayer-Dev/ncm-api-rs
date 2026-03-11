@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 云盘上传完成
 /// 对应 Node.js module/cloud_upload_complete.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 云盘上传完成 - 提交云盘信息

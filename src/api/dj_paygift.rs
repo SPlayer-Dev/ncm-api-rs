@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 付费电台
 /// 对应 Node.js module/dj_paygift.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 付费电台

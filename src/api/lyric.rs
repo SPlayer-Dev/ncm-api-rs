@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌词
 /// 对应 Node.js module/lyric.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取歌词
@@ -17,7 +17,11 @@ impl ApiClient {
             "kv": -1,
             "_nmclfl": 1
         });
-        self.request("/api/song/lyric", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/song/lyric",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

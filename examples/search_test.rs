@@ -1,7 +1,6 @@
 /// 搜索测试 - 打印原始响应查看数据
 ///
 /// 运行: cargo run --example search_test
-
 use ncm_api::{create_client, Query};
 
 #[tokio::main]
@@ -29,12 +28,7 @@ async fn main() {
 
             // 尝试多种可能的路径提取歌曲
             println!("\n--- 解析歌曲 ---");
-            let paths = [
-                "result.songs",
-                "data.songs",
-                "songs",
-                "result.song.songs",
-            ];
+            let paths = ["result.songs", "data.songs", "songs", "result.song.songs"];
             for path in paths {
                 let parts: Vec<&str> = path.split('.').collect();
                 let mut node = &resp.body;

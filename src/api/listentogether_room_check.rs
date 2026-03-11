@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 一起听 房间情况
 /// 对应 Node.js module/listentogether_room_check.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 一起听 房间情况
@@ -12,7 +12,11 @@ impl ApiClient {
         let data = json!({
             "roomId": query.get_or("roomId", "")
         });
-        self.request("/api/listen/together/room/check", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/listen/together/room/check",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

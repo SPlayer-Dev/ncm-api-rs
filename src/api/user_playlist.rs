@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 用户歌单
 /// 对应 Node.js module/user_playlist.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 用户歌单
@@ -15,7 +15,11 @@ impl ApiClient {
             "offset": query.get_or("offset", "0").parse::<i64>().unwrap_or(0),
             "includeVideo": true
         });
-        self.request("/api/user/playlist", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/user/playlist",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

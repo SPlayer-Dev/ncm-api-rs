@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 最近播放-声音
 /// 对应 Node.js module/record_recent_voice.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 最近播放-声音

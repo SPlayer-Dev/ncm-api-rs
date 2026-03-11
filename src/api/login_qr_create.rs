@@ -1,12 +1,12 @@
+use super::Query;
+use crate::error::Result;
 /// 二维码生成
 /// 对应 Node.js module/login_qr_create.js
 ///
 /// 注意: Node.js 版本使用 qrcode 库生成二维码图片，Rust 版本仅返回 URL，
 /// 不包含 qrimg 生成（需要调用方自行处理）
 use crate::request::{ApiClient, ApiResponse};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 二维码生成

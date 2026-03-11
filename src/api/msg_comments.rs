@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 评论
 /// 对应 Node.js module/msg_comments.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 评论

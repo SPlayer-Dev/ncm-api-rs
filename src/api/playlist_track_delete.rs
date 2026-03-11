@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 从歌单中删除歌曲
 /// 对应 Node.js module/playlist_track_delete.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 从歌单中删除歌曲

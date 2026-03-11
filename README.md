@@ -41,7 +41,7 @@
 
 ```toml
 [dependencies]
-ncm-api = { git = "https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced.git", branch = "feat/rust-sdk" }
+ncm-api = { git = "https://github.com/imsyy/ncm-api-rs.git" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -311,7 +311,7 @@ axum::serve(listener, app).await?;
 ### 接口速查表
 
 <details>
-<summary><strong>登录相关</strong>（16 个）</summary>
+<summary><strong>登录相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -335,7 +335,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>用户相关</strong>（32 个）</summary>
+<summary><strong>用户相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -375,7 +375,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>歌曲相关</strong>（30 个）</summary>
+<summary><strong>歌曲相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -413,7 +413,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>搜索相关</strong>（8 个）</summary>
+<summary><strong>搜索相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -429,7 +429,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>歌单相关</strong>（28 个）</summary>
+<summary><strong>歌单相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -465,7 +465,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>评论相关</strong>（15 个）</summary>
+<summary><strong>评论相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -488,7 +488,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>歌手相关</strong>（16 个）</summary>
+<summary><strong>歌手相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -512,7 +512,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>专辑相关</strong>（11 个）</summary>
+<summary><strong>专辑相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -531,7 +531,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>MV 相关</strong>（10 个）</summary>
+<summary><strong>MV 相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -549,7 +549,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>视频相关</strong>（13 个）</summary>
+<summary><strong>视频相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -570,7 +570,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>电台相关</strong>（25 个）</summary>
+<summary><strong>电台相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -603,7 +603,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>推荐相关</strong>（25 个）</summary>
+<summary><strong>推荐相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -636,7 +636,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>排行榜相关</strong>（11 个）</summary>
+<summary><strong>排行榜相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -655,7 +655,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>云盘相关</strong>（9 个）</summary>
+<summary><strong>云盘相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -672,7 +672,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>私信/动态相关</strong>（15 个）</summary>
+<summary><strong>私信/动态相关</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -695,7 +695,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>VIP/会员</strong>（9 个）</summary>
+<summary><strong>VIP/会员</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -712,7 +712,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>云贝</strong>（11 个）</summary>
+<summary><strong>云贝</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -731,7 +731,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>听歌足迹</strong>（12 个）</summary>
+<summary><strong>听歌足迹</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -751,7 +751,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>风格/曲风</strong>（7 个）</summary>
+<summary><strong>风格/曲风</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -766,7 +766,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>数字专辑</strong>（4 个）</summary>
+<summary><strong>数字专辑</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -778,7 +778,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>声音/播客</strong>（9 个）</summary>
+<summary><strong>声音/播客</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -795,7 +795,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>音乐人</strong>（8 个）</summary>
+<summary><strong>音乐人</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -811,7 +811,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>粉丝中心</strong>（5 个）</summary>
+<summary><strong>粉丝中心</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -824,7 +824,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>UGC 百科</strong>（7 个）</summary>
+<summary><strong>UGC 百科</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -839,7 +839,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>一起听</strong>（9 个）</summary>
+<summary><strong>一起听</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -856,7 +856,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>广播电台</strong>（5 个）</summary>
+<summary><strong>广播电台</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|
@@ -869,7 +869,7 @@ axum::serve(listener, app).await?;
 </details>
 
 <details>
-<summary><strong>其他</strong>（17 个）</summary>
+<summary><strong>其他</strong></summary>
 
 | 方法名 | 说明 |
 |--------|------|

@@ -1,12 +1,12 @@
+use super::Query;
+use crate::error::Result;
 /// 听歌识曲
 /// 对应 Node.js module/audio_match.js
 ///
 /// 注意: Node.js 版本直接通过 axios GET 请求外部接口，
 /// Rust 版本同样直接发送 HTTP GET 请求。
 use crate::request::{ApiClient, ApiResponse};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 听歌识曲

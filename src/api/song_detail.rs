@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌曲详情
 /// 对应 Node.js module/song_detail.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌曲详情
@@ -19,7 +19,11 @@ impl ApiClient {
         let data = json!({
             "c": serde_json::to_string(&c).unwrap_or_default()
         });
-        self.request("/api/v3/song/detail", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/v3/song/detail",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌曲播放链接
 /// 对应 Node.js module/song_url.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌曲播放链接
@@ -15,7 +15,10 @@ impl ApiClient {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
-        let br = query.get_or("br", "999000").parse::<i64>().unwrap_or(999000);
+        let br = query
+            .get_or("br", "999000")
+            .parse::<i64>()
+            .unwrap_or(999000);
         let data = json!({
             "ids": serde_json::to_string(&ids).unwrap_or_default(),
             "br": br

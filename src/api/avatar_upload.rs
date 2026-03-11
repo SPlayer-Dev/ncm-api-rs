@@ -1,12 +1,12 @@
+use super::Query;
+use crate::error::Result;
 /// 上传头像
 /// 对应 Node.js module/avatar_upload.js + plugins/upload.js
 ///
 /// 注意: 此端点需要调用者提供图片文件的二进制数据。
 /// 由于 Rust SDK 是纯库，文件读取由调用者负责。
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 上传头像图片
@@ -20,11 +20,7 @@ impl ApiClient {
     /// 1. 申请 NOS 上传 token
     /// 2. 上传文件到 NOS
     /// 3. 调用头像更新接口
-    pub async fn avatar_upload(
-        &self,
-        query: &Query,
-        img_data: Vec<u8>,
-    ) -> Result<ApiResponse> {
+    pub async fn avatar_upload(&self, query: &Query, img_data: Vec<u8>) -> Result<ApiResponse> {
         let img_name = query.get_or("img_name", "avatar.jpg");
         let img_mimetype = query.get_or("img_mimetype", "image/jpeg");
 
@@ -48,12 +44,8 @@ impl ApiClient {
             .await?;
 
         let result = &token_res.body["result"];
-        let object_key = result["objectKey"]
-            .as_str()
-            .unwrap_or_default();
-        let token = result["token"]
-            .as_str()
-            .unwrap_or_default();
+        let object_key = result["objectKey"].as_str().unwrap_or_default();
+        let token = result["token"].as_str().unwrap_or_default();
         let doc_id = result["docId"].clone();
 
         // Step 2: 上传文件到 NOS

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌词摘录 - 我的歌词本
 /// 对应 Node.js module/song_lyrics_mark_user_page.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌词摘录 - 我的歌词本

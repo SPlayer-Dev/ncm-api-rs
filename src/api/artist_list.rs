@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌手列表
 /// 对应 Node.js module/artist_list.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌手列表
@@ -26,7 +26,11 @@ impl ApiClient {
             "type": query.get_or("type", "1"),
             "area": query.get_or("area", "")
         });
-        self.request("/api/v1/artist/list", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/v1/artist/list",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

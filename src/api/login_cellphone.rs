@@ -1,10 +1,10 @@
+use super::Query;
+use crate::error::Result;
 /// 手机号登录
 /// 对应 Node.js module/login_cellphone.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
-use md5::{Md5, Digest};
+use md5::{Digest, Md5};
 use serde_json::{json, Value};
-use super::Query;
 
 impl ApiClient {
     /// 手机号登录

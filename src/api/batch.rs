@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 批量请求接口
 /// 对应 Node.js module/batch.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 批量请求接口
@@ -13,14 +13,13 @@ impl ApiClient {
         let map = data.as_object_mut().unwrap();
         for (key, value) in &query.params {
             if key.starts_with("/api/") {
-                map.insert(key.to_string(), serde_json::Value::String(value.to_string()));
+                map.insert(
+                    key.to_string(),
+                    serde_json::Value::String(value.to_string()),
+                );
             }
         }
-        self.request(
-            "/api/batch",
-            data,
-            query.to_option(CryptoType::default()),
-        )
-        .await
+        self.request("/api/batch", data, query.to_option(CryptoType::default()))
+            .await
     }
 }

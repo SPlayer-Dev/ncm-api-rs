@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 云村星评馆 - 简要评论列表
 /// 对应 Node.js module/starpick_comments_summary.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 云村星评馆 - 简要评论列表

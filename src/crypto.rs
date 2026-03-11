@@ -4,11 +4,11 @@
 /// - weapi: 双层 AES-128-CBC + RSA
 /// - eapi: MD5 签名 + AES-128-ECB
 /// - linuxapi: AES-128-ECB
-use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit, KeyInit};
-use md5::{Md5, Digest};
+use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyInit, KeyIvInit};
+use md5::{Digest, Md5};
 use rand::Rng;
-use rsa::{BigUint, RsaPublicKey};
 use rsa::traits::PublicKeyParts;
+use rsa::{BigUint, RsaPublicKey};
 use std::collections::HashMap;
 
 type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
@@ -57,8 +57,8 @@ fn rsa_encrypt_no_padding(plaintext: &[u8]) -> String {
         .decode(PUBLIC_KEY_DER_B64)
         .expect("Failed to decode RSA public key base64");
 
-    let public_key = RsaPublicKey::from_public_key_der(&der_bytes)
-        .expect("Failed to parse RSA public key DER");
+    let public_key =
+        RsaPublicKey::from_public_key_der(&der_bytes).expect("Failed to parse RSA public key DER");
 
     let n = public_key.n().clone();
     let e = public_key.e().clone();
@@ -108,7 +108,10 @@ pub fn weapi(object: &serde_json::Value) -> HashMap<String, String> {
 pub fn linuxapi(object: &serde_json::Value) -> HashMap<String, String> {
     let text = serde_json::to_string(object).unwrap();
     let mut result = HashMap::new();
-    result.insert("eparams".to_string(), aes_ecb_encrypt_hex(text.as_bytes(), LINUXAPI_KEY));
+    result.insert(
+        "eparams".to_string(),
+        aes_ecb_encrypt_hex(text.as_bytes(), LINUXAPI_KEY),
+    );
     result
 }
 
@@ -121,7 +124,10 @@ pub fn eapi(url: &str, object: &serde_json::Value) -> HashMap<String, String> {
     let data = format!("{}-36cd479b6b5-{}-36cd479b6b5-{}", url, text, digest);
 
     let mut result = HashMap::new();
-    result.insert("params".to_string(), aes_ecb_encrypt_hex(data.as_bytes(), EAPI_KEY));
+    result.insert(
+        "params".to_string(),
+        aes_ecb_encrypt_hex(data.as_bytes(), EAPI_KEY),
+    );
     result
 }
 

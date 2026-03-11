@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 最新 MV
 /// 对应 Node.js module/mv_first.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 最新 MV
@@ -14,7 +14,11 @@ impl ApiClient {
             "limit": query.get_or("limit", "30").parse::<i64>().unwrap_or(30),
             "total": true
         });
-        self.request("/api/mv/first", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/mv/first",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

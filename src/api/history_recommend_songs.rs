@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 历史推荐歌曲
 /// 对应 Node.js module/history_recommend_songs.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 历史推荐歌曲

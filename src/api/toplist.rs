@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 排行榜列表
 /// 对应 Node.js module/toplist.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 排行榜列表

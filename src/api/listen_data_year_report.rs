@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 听歌足迹 - 年度听歌足迹
 /// 对应 Node.js module/listen_data_year_report.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 听歌足迹 - 年度听歌足迹

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 编辑歌单
 /// 对应 Node.js module/playlist_update.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 编辑歌单（批量更新名称、描述、标签）

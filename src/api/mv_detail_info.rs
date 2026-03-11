@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// MV 点赞转发评论数数据
 /// 对应 Node.js module/mv_detail_info.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// MV 点赞转发评论数数据

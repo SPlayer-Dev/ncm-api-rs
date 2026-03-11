@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 曲风-歌曲
 /// 对应 Node.js module/style_song.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 曲风-歌曲

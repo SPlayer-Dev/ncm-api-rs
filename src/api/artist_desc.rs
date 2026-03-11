@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌手介绍
 /// 对应 Node.js module/artist_desc.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌手介绍

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 电台非热门类型
 /// 对应 Node.js module/dj_category_excludehot.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 电台非热门类型

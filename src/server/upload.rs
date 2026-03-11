@@ -2,7 +2,6 @@
 ///
 /// avatar_upload 和 voice_upload 需要 multipart 表单处理，
 /// 签名与普通 API 不同，单独实现
-
 use super::{build_error_response, build_success_response, AppState};
 use crate::api::Query;
 use axum::extract::{Multipart, State};
@@ -28,14 +27,17 @@ pub async fn handle_avatar_upload(
 
         if name == "imgFile" {
             if let Some(fname) = field.file_name() {
-                query.params.insert("img_name".to_string(), fname.to_string());
+                query
+                    .params
+                    .insert("img_name".to_string(), fname.to_string());
             }
             match field.bytes().await {
                 Ok(bytes) => img_data = Some(bytes.to_vec()),
                 Err(e) => {
-                    return build_error_response(crate::error::NcmError::Unknown(
-                        format!("Failed to read upload data: {}", e),
-                    ));
+                    return build_error_response(crate::error::NcmError::Unknown(format!(
+                        "Failed to read upload data: {}",
+                        e
+                    )));
                 }
             }
         } else {
@@ -57,7 +59,11 @@ pub async fn handle_avatar_upload(
     let start = std::time::Instant::now();
     match state.client.avatar_upload(&query, data).await {
         Ok(resp) => {
-            tracing::info!("/avatar/upload -> {} ({:.1?})", resp.status, start.elapsed());
+            tracing::info!(
+                "/avatar/upload -> {} ({:.1?})",
+                resp.status,
+                start.elapsed()
+            );
             build_success_response(resp)
         }
         Err(e) => {
@@ -95,9 +101,10 @@ pub async fn handle_voice_upload(
             match field.bytes().await {
                 Ok(bytes) => file_data = Some(bytes.to_vec()),
                 Err(e) => {
-                    return build_error_response(crate::error::NcmError::Unknown(
-                        format!("Failed to read upload data: {}", e),
-                    ));
+                    return build_error_response(crate::error::NcmError::Unknown(format!(
+                        "Failed to read upload data: {}",
+                        e
+                    )));
                 }
             }
         } else {

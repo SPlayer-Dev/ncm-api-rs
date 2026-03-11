@@ -1,10 +1,10 @@
+use super::Query;
+use crate::error::Result;
 /// 绑定手机号码
 /// 对应 Node.js module/user_bindingcellphone.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
-use md5::{Md5, Digest};
+use md5::{Digest, Md5};
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 绑定手机号码

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 声音歌词
 /// 对应 Node.js module/voice_lyric.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 声音歌词
@@ -12,7 +12,11 @@ impl ApiClient {
         let data = json!({
             "programId": query.get_or("id", "")
         });
-        self.request("/api/voice/lyric/get", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/voice/lyric/get",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

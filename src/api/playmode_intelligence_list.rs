@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 智能播放列表
 /// 对应 Node.js module/playmode_intelligence_list.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 智能播放列表

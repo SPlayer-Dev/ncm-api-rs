@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 点赞与取消点赞资源
 /// 对应 Node.js module/resource_like.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 点赞与取消点赞资源

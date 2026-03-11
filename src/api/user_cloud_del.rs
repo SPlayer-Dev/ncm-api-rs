@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 用户云盘歌曲删除
 /// 对应 Node.js module/user_cloud_del.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 用户云盘歌曲删除

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌曲简要百科信息
 /// 对应 Node.js module/ugc_song_get.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌曲简要百科信息
@@ -12,7 +12,11 @@ impl ApiClient {
         let data = json!({
             "songId": query.get_or("id", "")
         });
-        self.request("/api/rep/ugc/song/get", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/rep/ugc/song/get",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 获取客户端歌曲下载链接 - v1 (302 重定向)
 /// 对应 Node.js module/song_url_v1_302.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取客户端歌曲下载链接 (302 重定向)
@@ -30,7 +30,8 @@ impl ApiClient {
             .await?;
 
         // 检查第一次请求是否有 url
-        let url = response.body
+        let url = response
+            .body
             .get("data")
             .and_then(|d| d.get(0))
             .and_then(|item| item.get("url"))
@@ -62,7 +63,8 @@ impl ApiClient {
             )
             .await?;
 
-        let fallback_url = fallback.body
+        let fallback_url = fallback
+            .body
             .get("data")
             .and_then(|d| d.get(0))
             .and_then(|item| item.get("url"))

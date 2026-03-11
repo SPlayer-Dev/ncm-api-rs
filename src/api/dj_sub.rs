@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 订阅/取消订阅电台
 /// 对应 Node.js module/dj_sub.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 订阅/取消订阅电台

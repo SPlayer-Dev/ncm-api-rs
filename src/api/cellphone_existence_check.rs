@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 检测手机号码是否已注册
 /// 对应 Node.js module/cellphone_existence_check.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 检测手机号码是否已注册

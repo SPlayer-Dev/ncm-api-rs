@@ -1,13 +1,18 @@
-/// 构建脚本 - 自动从 src/api/mod.rs 扫描模块声明，生成路由注册代码
-///
-/// 类似 Node.js 版自动扫描 module/ 目录注册路由
+//! 构建脚本 - 自动从 src/api/mod.rs 扫描模块声明，生成路由注册代码
+//!
+//! 类似 Node.js 版自动扫描 module/ 目录注册路由
 
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 
 /// 不转换下划线为斜杠的特殊路由（与 Node.js server.js 中的 special 对应）
-const SPECIAL_ROUTES: &[&str] = &["daily_signin", "fm_trash", "personal_fm", "personal_fm_mode"];
+const SPECIAL_ROUTES: &[&str] = &[
+    "daily_signin",
+    "fm_trash",
+    "personal_fm",
+    "personal_fm_mode",
+];
 
 /// 需要特殊处理的路由，不走通用宏
 /// - 上传路由：需要 multipart 处理
@@ -19,8 +24,8 @@ const EXCLUDED_MODULES: &[&str] = &[
     "eapi_decrypt",
     "inner_version",
     // 以下模块的文件名和方法名不一致（一个文件包含多个方法）
-    "cloud",                // -> cloud_upload_check, cloud_upload_info, cloud_publish
-    "cloud_upload_token",   // -> cloud_upload_token_check, cloud_upload_token_alloc
+    "cloud",                 // -> cloud_upload_check, cloud_upload_info, cloud_publish
+    "cloud_upload_token",    // -> cloud_upload_token_check, cloud_upload_token_alloc
     "cloud_upload_complete", // -> cloud_upload_complete_info, cloud_upload_complete_pub
 ];
 

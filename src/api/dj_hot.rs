@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 电台热门
 /// 对应 Node.js module/dj_hot.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 热门电台

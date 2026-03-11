@@ -2,7 +2,6 @@
 ///
 /// 使用 Axum 框架，将 ApiClient 的所有方法自动映射为 REST API 路由
 /// 前端可以像调用 Node.js 版一样通过 HTTP 请求调用
-
 pub mod middleware;
 pub mod upload;
 
@@ -33,6 +32,10 @@ pub struct ServerConfig {
     pub port: u16,
     /// CORS 允许的 Origin，None 表示允许所有
     pub cors_origin: Option<String>,
+    /// 限流：时间窗口内最大请求数，0 表示不限流
+    pub rate_limit: u64,
+    /// 限流：时间窗口秒数
+    pub rate_limit_window: u64,
 }
 
 impl Default for ServerConfig {
@@ -41,6 +44,8 @@ impl Default for ServerConfig {
             host: "0.0.0.0".to_string(),
             port: 3000,
             cors_origin: None,
+            rate_limit: 0,
+            rate_limit_window: 60,
         }
     }
 }
@@ -50,6 +55,8 @@ impl ServerConfig {
     /// - `NCM_HOST`: 监听地址
     /// - `NCM_PORT`: 监听端口
     /// - `CORS_ALLOW_ORIGIN`: CORS 允许的 Origin
+    /// - `RATE_LIMIT`: 每个时间窗口的最大请求数（默认不限流）
+    /// - `RATE_LIMIT_WINDOW`: 限流时间窗口秒数（默认 60）
     pub fn from_env() -> Self {
         Self {
             host: std::env::var("NCM_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
@@ -58,6 +65,14 @@ impl ServerConfig {
                 .and_then(|p| p.parse().ok())
                 .unwrap_or(3000),
             cors_origin: std::env::var("CORS_ALLOW_ORIGIN").ok(),
+            rate_limit: std::env::var("RATE_LIMIT")
+                .ok()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(0),
+            rate_limit_window: std::env::var("RATE_LIMIT_WINDOW")
+                .ok()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(60),
         }
     }
 }
@@ -111,9 +126,7 @@ async fn extract_merged_query(
             }
         } else {
             // form-urlencoded 或其他格式
-            if let Ok(params) =
-                serde_urlencoded::from_bytes::<HashMap<String, String>>(&body)
-            {
+            if let Ok(params) = serde_urlencoded::from_bytes::<HashMap<String, String>>(&body) {
                 for (k, v) in params {
                     query.params.insert(k, v);
                 }
@@ -166,18 +179,29 @@ fn build_success_response(api_resp: ApiResponse) -> Response {
 
 /// 构建错误响应
 fn build_error_response(err: crate::error::NcmError) -> Response {
+    use crate::error::NcmError;
+
     let (status, body) = match &err {
-        crate::error::NcmError::Api { code, msg } => {
-            let http_status = if *code == 301 {
-                axum::http::StatusCode::UNAUTHORIZED
-            } else {
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR
-            };
-            let mut body = json!({ "code": code, "msg": msg });
-            if *code == 301 {
-                body["msg"] = json!("需要登录");
-            }
-            (http_status, body)
+        NcmError::AuthRequired(msg) => (
+            axum::http::StatusCode::UNAUTHORIZED,
+            json!({ "code": 301, "msg": msg }),
+        ),
+        NcmError::InvalidParam(msg) => (
+            axum::http::StatusCode::BAD_REQUEST,
+            json!({ "code": 400, "msg": msg }),
+        ),
+        NcmError::RateLimited(msg) => (
+            axum::http::StatusCode::TOO_MANY_REQUESTS,
+            json!({ "code": 503, "msg": msg }),
+        ),
+        NcmError::Timeout(msg) => (
+            axum::http::StatusCode::GATEWAY_TIMEOUT,
+            json!({ "code": 504, "msg": msg }),
+        ),
+        NcmError::Api { code, msg } => {
+            let http_status = axum::http::StatusCode::from_u16(*code as u16)
+                .unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+            (http_status, json!({ "code": code, "msg": msg }))
         }
         _ => (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -193,12 +217,20 @@ fn build_error_response(err: crate::error::NcmError) -> Response {
 // ============================================================
 
 /// 通用 API 请求处理函数
-async fn handle_api_request<F>(state: &AppState, headers: HeaderMap, uri: &axum::http::Uri, body: axum::body::Bytes, api_fn: F) -> Response
+async fn handle_api_request<F>(
+    state: &AppState,
+    headers: HeaderMap,
+    uri: &axum::http::Uri,
+    body: axum::body::Bytes,
+    api_fn: F,
+) -> Response
 where
     F: for<'a> FnOnce(
         &'a ApiClient,
         &'a Query,
-    ) -> Pin<Box<dyn Future<Output = crate::error::Result<ApiResponse>> + Send + 'a>>,
+    ) -> Pin<
+        Box<dyn Future<Output = crate::error::Result<ApiResponse>> + Send + 'a>,
+    >,
 {
     let path = uri.path().to_string();
     let start = std::time::Instant::now();
@@ -256,9 +288,7 @@ macro_rules! api_routes {
 /// 上传路由（avatar_upload, voice_upload）需要 multipart 处理，单独注册
 fn register_routes(router: Router<AppState>) -> Router<AppState> {
     // 自动生成的标准路由（build.rs → api_routes_generated.rs）
-    let router = {
-        include!(concat!(env!("OUT_DIR"), "/api_routes_generated.rs"))
-    };
+    let router = { include!(concat!(env!("OUT_DIR"), "/api_routes_generated.rs")) };
 
     // 文件上传路由（特殊签名，需要 multipart 处理）
     let router = router
@@ -294,12 +324,10 @@ pub fn build_app(client: ApiClient) -> Router {
         }),
     );
 
-    router
-        .layer(middleware::cors_layer(None))
-        .with_state(state)
+    router.layer(middleware::cors_layer(None)).with_state(state)
 }
 
-/// 构建带自定义 CORS 的 Axum 应用
+/// 构建带自定义配置的 Axum 应用
 pub fn build_app_with_config(client: ApiClient, config: &ServerConfig) -> Router {
     let state = AppState {
         client: Arc::new(client),
@@ -318,9 +346,20 @@ pub fn build_app_with_config(client: ApiClient, config: &ServerConfig) -> Router
         }),
     );
 
-    router
+    let router = router
         .layer(middleware::cors_layer(config.cors_origin.as_deref()))
-        .with_state(state)
+        .with_state(state);
+
+    // 限流中间件（rate_limit > 0 时启用）
+    if config.rate_limit > 0 {
+        let limiter = middleware::RateLimiter::new(config.rate_limit, config.rate_limit_window);
+        router.layer(axum::middleware::from_fn_with_state(
+            limiter,
+            middleware::rate_limit_middleware,
+        ))
+    } else {
+        router
+    }
 }
 
 /// 启动 HTTP 服务器
@@ -335,7 +374,5 @@ pub async fn start_server(config: ServerConfig) {
 
     tracing::info!("NCM API Server listening on http://{}", addr);
 
-    axum::serve(listener, app)
-        .await
-        .expect("Server error");
+    axum::serve(listener, app).await.expect("Server error");
 }

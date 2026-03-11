@@ -1,9 +1,9 @@
+use crate::error::Result;
 /// 相关歌单
 /// 对应 Node.js module/related_playlist.js
 ///
 /// 注意：此接口通过抓取网页 HTML 获取数据，不使用标准 API 请求。
 use crate::request::{ApiClient, ApiResponse};
-use crate::error::Result;
 use regex_lite::Regex;
 use serde_json::json;
 

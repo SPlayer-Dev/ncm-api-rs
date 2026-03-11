@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 话题详情
 /// 对应 Node.js module/topic_detail.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 话题详情
@@ -12,11 +12,7 @@ impl ApiClient {
         let data = json!({
             "actid": query.get_or("actid", "")
         });
-        self.request(
-            "/api/act/detail",
-            data,
-            query.to_option(CryptoType::Weapi),
-        )
-        .await
+        self.request("/api/act/detail", data, query.to_option(CryptoType::Weapi))
+            .await
     }
 }

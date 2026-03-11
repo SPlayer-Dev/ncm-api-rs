@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 获取达人用户信息
 /// 对应 Node.js module/creator_authinfo_get.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取达人用户信息

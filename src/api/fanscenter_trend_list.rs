@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 粉丝来源
 /// 对应 Node.js module/fanscenter_trend_list.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 粉丝来源
@@ -14,7 +14,11 @@ impl ApiClient {
             "endTime": query.get_or("endTime", ""),
             "type": query.get_or("type", "0")
         });
-        self.request("/api/fanscenter/trend/list", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/fanscenter/trend/list",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

@@ -20,13 +20,7 @@ pub fn cookie_to_json(cookie: &str) -> HashMap<String, String> {
 pub fn cookie_obj_to_string(cookie: &HashMap<String, String>) -> String {
     cookie
         .iter()
-        .map(|(k, v)| {
-            format!(
-                "{}={}",
-                urlencoding::encode(k),
-                urlencoding::encode(v)
-            )
-        })
+        .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
         .collect::<Vec<_>>()
         .join("; ")
 }

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌单导入 - 元数据/文字/链接导入
 /// 对应 Node.js module/playlist_import_name_task_create.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌单导入 - 元数据/文字/链接导入
@@ -13,7 +13,8 @@ impl ApiClient {
 
         let data = if let Some(local) = query.get("local") {
             // 元数据导入
-            let local_parsed: Vec<serde_json::Value> = serde_json::from_str(&local).unwrap_or_default();
+            let local_parsed: Vec<serde_json::Value> =
+                serde_json::from_str(local).unwrap_or_default();
             let multi_songs: Vec<serde_json::Value> = local_parsed
                 .iter()
                 .map(|e| {
@@ -42,7 +43,7 @@ impl ApiClient {
                 .unwrap_or_default()
             } else if let Some(link) = query.get("link") {
                 // 链接导入
-                let links: Vec<String> = serde_json::from_str(&link).unwrap_or_default();
+                let links: Vec<String> = serde_json::from_str(link).unwrap_or_default();
                 let entries: Vec<serde_json::Value> = links
                     .iter()
                     .map(|e| {

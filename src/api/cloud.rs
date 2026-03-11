@@ -1,3 +1,5 @@
+use super::Query;
+use crate::error::Result;
 /// 云盘上传
 /// 对应 Node.js module/cloud.js
 ///
@@ -6,9 +8,7 @@
 /// Rust SDK 将其拆分为独立的步骤接口（cloud_upload_token、cloud_upload_complete 等），
 /// 此方法仅实现第一步：上传检查。
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 云盘上传检查

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 获取 VIP 信息
 /// 对应 Node.js module/vip_info.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取 VIP 信息

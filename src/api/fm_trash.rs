@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// FM 垃圾桶
 /// 对应 Node.js module/fm_trash.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// FM 垃圾桶（不再播放）
@@ -14,7 +14,11 @@ impl ApiClient {
             "alg": "RT",
             "time": query.get_or("time", "25").parse::<i64>().unwrap_or(25)
         });
-        self.request("/api/radio/trash/add", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/radio/trash/add",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

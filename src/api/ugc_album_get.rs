@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 专辑简要百科信息
 /// 对应 Node.js module/ugc_album_get.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 专辑简要百科信息
@@ -12,7 +12,11 @@ impl ApiClient {
         let data = json!({
             "albumId": query.get_or("id", "")
         });
-        self.request("/api/rep/ugc/album/get", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/rep/ugc/album/get",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

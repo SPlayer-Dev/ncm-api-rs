@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 本地歌曲匹配音乐信息
 /// 对应 Node.js module/search_match.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 本地歌曲匹配音乐信息
@@ -19,7 +19,11 @@ impl ApiClient {
         let data = json!({
             "songs": songs.to_string(),
         });
-        self.request("/api/search/match/new", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/search/match/new",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

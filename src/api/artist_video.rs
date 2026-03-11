@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌手相关视频
 /// 对应 Node.js module/artist_video.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌手相关视频
@@ -19,7 +19,11 @@ impl ApiClient {
             "tab": 0,
             "order": query.get_or("order", "0").parse::<i64>().unwrap_or(0)
         });
-        self.request("/api/mlog/artist/video", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/mlog/artist/video",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

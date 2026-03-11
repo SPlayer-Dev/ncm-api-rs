@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 收藏的歌手列表
 /// 对应 Node.js module/artist_sublist.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 收藏的歌手列表
@@ -14,7 +14,11 @@ impl ApiClient {
             "offset": query.get_or("offset", "0").parse::<i64>().unwrap_or(0),
             "total": true
         });
-        self.request("/api/artist/sublist", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/artist/sublist",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

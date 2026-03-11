@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 听歌足迹 - 本周/本月收听时长
 /// 对应 Node.js module/listen_data_realtime_report.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 听歌足迹 - 本周/本月收听时长

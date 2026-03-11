@@ -1,18 +1,15 @@
+use super::Query;
+use crate::error::Result;
 /// 关注歌手新歌
 /// 对应 Node.js module/artist_new_song.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 关注歌手新歌
     /// 对应 /artist/new/song
     pub async fn artist_new_song(&self, query: &Query) -> Result<ApiResponse> {
-        let before = query.get_or(
-            "before",
-            &chrono::Utc::now().timestamp_millis().to_string(),
-        );
+        let before = query.get_or("before", &chrono::Utc::now().timestamp_millis().to_string());
         let data = json!({
             "limit": query.get_or("limit", "20"),
             "startTimestamp": before

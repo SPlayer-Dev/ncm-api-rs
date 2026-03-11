@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 年度听歌报告2017-2023
 /// 对应 Node.js module/summary_annual.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 年度听歌报告2017-2023
@@ -16,11 +16,7 @@ impl ApiClient {
             _ => "data",
         };
         let url = format!("/api/activity/summary/annual/{}/{}", year, key);
-        self.request(
-            &url,
-            data,
-            query.to_option(CryptoType::default()),
-        )
-        .await
+        self.request(&url, data, query.to_option(CryptoType::default()))
+            .await
     }
 }

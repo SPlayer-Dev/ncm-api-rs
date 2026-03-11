@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 一起听 当前列表获取
 /// 对应 Node.js module/listentogether_sync_playlist_get.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 一起听 当前列表获取

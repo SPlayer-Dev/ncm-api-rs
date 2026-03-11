@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 电台最热主播榜
 /// 对应 Node.js module/dj_toplist_popular.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 电台最热主播榜

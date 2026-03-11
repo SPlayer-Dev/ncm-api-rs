@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 云盘导入歌曲
 /// 对应 Node.js module/cloud_import.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 云盘导入歌曲 - 检查

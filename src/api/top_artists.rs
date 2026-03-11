@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 热门歌手
 /// 对应 Node.js module/top_artists.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 热门歌手
@@ -14,11 +14,7 @@ impl ApiClient {
             "offset": query.get_or("offset", "0").parse::<i64>().unwrap_or(0),
             "total": true
         });
-        self.request(
-            "/api/artist/top",
-            data,
-            query.to_option(CryptoType::Weapi),
-        )
-        .await
+        self.request("/api/artist/top", data, query.to_option(CryptoType::Weapi))
+            .await
     }
 }

@@ -1,10 +1,10 @@
+use super::Query;
+use crate::error::Result;
 /// 邮箱登录
 /// 对应 Node.js module/login.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
-use md5::{Md5, Digest};
+use md5::{Digest, Md5};
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 邮箱登录
@@ -25,12 +25,9 @@ impl ApiClient {
             "password": password,
             "rememberLogin": "true"
         });
-        let mut result = self.request(
-            "/api/w/login",
-            data,
-            query.to_option(CryptoType::default()),
-        )
-        .await?;
+        let mut result = self
+            .request("/api/w/login", data, query.to_option(CryptoType::default()))
+            .await?;
         if result.body.get("code").and_then(|v| v.as_i64()) == Some(502) {
             result.status = 200;
             result.body = json!({

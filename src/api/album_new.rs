@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 全部新碟
 /// 对应 Node.js module/album_new.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 全部新碟
@@ -15,11 +15,7 @@ impl ApiClient {
             "total": true,
             "area": query.get_or("area", "ALL")
         });
-        self.request(
-            "/api/album/new",
-            data,
-            query.to_option(CryptoType::Weapi),
-        )
-        .await
+        self.request("/api/album/new", data, query.to_option(CryptoType::Weapi))
+            .await
     }
 }

@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 歌曲播放链接 (ncmget 占位)
 /// 对应 Node.js module/song_url_ncmget.js
 use crate::request::{ApiClient, ApiResponse};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 歌曲播放链接 (ncmget 占位接口，始终返回空数据)

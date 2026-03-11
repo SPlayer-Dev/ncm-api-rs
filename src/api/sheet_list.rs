@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 乐谱列表
 /// 对应 Node.js module/sheet_list.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 乐谱列表

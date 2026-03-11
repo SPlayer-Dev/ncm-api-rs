@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 已购买单曲
 /// 对应 Node.js module/song_singledownlist.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 已购买单曲
@@ -14,7 +14,11 @@ impl ApiClient {
             "offset": query.get_or("offset", "0"),
             "total": "true",
         });
-        self.request("/api/member/song/singledownlist", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/member/song/singledownlist",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

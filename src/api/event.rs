@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 动态
 /// 对应 Node.js module/event.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取动态
@@ -13,7 +13,11 @@ impl ApiClient {
             "pagesize": query.get_or("pagesize", "20").parse::<i64>().unwrap_or(20),
             "lasttime": query.get_or("lasttime", "-1").parse::<i64>().unwrap_or(-1)
         });
-        self.request("/api/v1/event/get", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/v1/event/get",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

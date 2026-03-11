@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 会员成长值领取记录
 /// 对应 Node.js module/vip_growthpoint_details.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 会员成长值领取记录

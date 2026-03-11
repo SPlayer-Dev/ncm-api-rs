@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// @我
 /// 对应 Node.js module/msg_forwards.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// @我
@@ -14,7 +14,11 @@ impl ApiClient {
             "limit": query.get_or("limit", "30").parse::<i64>().unwrap_or(30),
             "total": "true"
         });
-        self.request("/api/forwards/get", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/forwards/get",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

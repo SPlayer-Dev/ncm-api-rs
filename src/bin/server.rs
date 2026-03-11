@@ -1,4 +1,4 @@
-use ncm_api::server::{ServerConfig, start_server};
+use ncm_api::server::{start_server, ServerConfig};
 
 #[tokio::main]
 async fn main() {

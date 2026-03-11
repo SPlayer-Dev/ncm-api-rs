@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 用户贡献内容
 /// 对应 Node.js module/ugc_detail.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 用户贡献内容
@@ -17,7 +17,11 @@ impl ApiClient {
             "sortBy": query.get_or("sortBy", "createTime"),
             "type": query.get_or("type", "1")
         });
-        self.request("/api/rep/ugc/detail", data, query.to_option(CryptoType::Weapi))
-            .await
+        self.request(
+            "/api/rep/ugc/detail",
+            data,
+            query.to_option(CryptoType::Weapi),
+        )
+        .await
     }
 }

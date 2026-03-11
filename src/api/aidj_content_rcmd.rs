@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 私人 DJ
 /// 对应 Node.js module/aidj_content_rcmd.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 impl ApiClient {
@@ -35,7 +35,11 @@ impl ApiClient {
         let data = json!({
             "extInfo": ext_info.to_string()
         });
-        self.request("/api/aidj/content/rcmd/info", data, query.to_option(CryptoType::Eapi))
-            .await
+        self.request(
+            "/api/aidj/content/rcmd/info",
+            data,
+            query.to_option(CryptoType::Eapi),
+        )
+        .await
     }
 }

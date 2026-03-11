@@ -1,10 +1,10 @@
+use super::Query;
 /// EAPI 解密
 /// 对应 Node.js module/eapi_decrypt.js
 use crate::crypto::{eapi_req_decrypt, eapi_res_decrypt};
-use crate::request::{ApiClient, ApiResponse};
 use crate::error::Result;
+use crate::request::{ApiClient, ApiResponse};
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// EAPI 解密

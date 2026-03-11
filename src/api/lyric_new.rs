@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 新版歌词
 /// 对应 Node.js module/lyric_new.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 获取新版歌词（含逐字歌词）
@@ -20,7 +20,11 @@ impl ApiClient {
             "ytv": 0,
             "yrv": 0
         });
-        self.request("/api/song/lyric/v1", data, query.to_option(CryptoType::default()))
-            .await
+        self.request(
+            "/api/song/lyric/v1",
+            data,
+            query.to_option(CryptoType::default()),
+        )
+        .await
     }
 }

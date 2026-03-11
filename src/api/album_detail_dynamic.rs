@@ -1,9 +1,9 @@
+use super::Query;
+use crate::error::Result;
 /// 专辑动态信息
 /// 对应 Node.js module/album_detail_dynamic.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use crate::error::Result;
 use serde_json::json;
-use super::Query;
 
 impl ApiClient {
     /// 专辑动态信息
