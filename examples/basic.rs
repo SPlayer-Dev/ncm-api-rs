@@ -1,7 +1,7 @@
 /// 使用示例：搜索歌曲并获取播放链接
 ///
 /// 运行: cargo run --example basic
-use ncm_api::{create_client, Query};
+use ncm_api_rs::{create_client, Query};
 
 #[tokio::main]
 async fn main() {

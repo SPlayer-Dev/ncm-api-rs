@@ -5,6 +5,8 @@
 **网易云音乐 API Rust 原生实现**
 
 [![Rust](https://img.shields.io/badge/Rust-1.70+-orange?logo=rust)](https://www.rust-lang.org/)
+[![Crates.io](https://img.shields.io/crates/v/ncm-api-rs.svg)](https://crates.io/crates/ncm-api-rs)
+[![GitHub Release](https://img.shields.io/github/v/release/imsyy/ncm-api-rs)](https://github.com/imsyy/ncm-api-rs/releases)
 [![License](https://img.shields.io/badge/license-WTFPL-brightgreen.svg)](LICENSE)
 [![Tokio](https://img.shields.io/badge/async-tokio-blue?logo=rust)](https://tokio.rs/)
 
@@ -37,26 +39,56 @@
 
 ### 安装
 
-在 `Cargo.toml` 中添加依赖：
+#### 作为 Rust 库依赖
 
 ```toml
 [dependencies]
-ncm-api = { git = "https://github.com/imsyy/ncm-api-rs.git" }
+ncm-api-rs = "0.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
-或使用本地路径（开发时）：
+或从 Git 安装最新版：
 
 ```toml
 [dependencies]
-ncm-api = { path = "../rust-sdk" }
+ncm-api-rs = { git = "https://github.com/imsyy/ncm-api-rs.git" }
 tokio = { version = "1", features = ["full"] }
+```
+
+#### 安装 HTTP 服务器
+
+通过 cargo 安装：
+
+```bash
+cargo install ncm-api-rs --features server
+```
+
+或从 [GitHub Releases](https://github.com/imsyy/ncm-api-rs/releases) 下载预编译二进制文件，支持以下平台：
+
+| 平台 | 架构 | 文件 |
+|------|------|------|
+| Linux | x64 | `ncm-server-vX.X.X-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux | ARM64 | `ncm-server-vX.X.X-aarch64-unknown-linux-gnu.tar.gz` |
+| macOS | x64 | `ncm-server-vX.X.X-x86_64-apple-darwin.tar.gz` |
+| macOS | Apple Silicon | `ncm-server-vX.X.X-aarch64-apple-darwin.tar.gz` |
+| Windows | x64 | `ncm-server-vX.X.X-x86_64-pc-windows-msvc.zip` |
+
+下载后解压即可运行：
+
+```bash
+# Linux / macOS
+tar xzf ncm-server-*.tar.gz
+./ncm-server
+
+# Windows
+# 解压 zip 后双击 ncm-server.exe 或在终端运行
+ncm-server.exe
 ```
 
 ### 基础使用
 
 ```rust
-use ncm_api::{create_client, Query};
+use ncm_api_rs::{create_client, Query};
 
 #[tokio::main]
 async fn main() {
@@ -93,7 +125,7 @@ async fn main() {
 ### 带 Cookie 使用（登录后的接口）
 
 ```rust
-use ncm_api::{create_client, Query};
+use ncm_api_rs::{create_client, Query};
 
 #[tokio::main]
 async fn main() {
@@ -226,11 +258,14 @@ cargo build --release --features server --bin ncm-server
 |--------|------|--------|
 | `NCM_HOST` | 监听地址 | `0.0.0.0` |
 | `NCM_PORT` | 监听端口 | `3000` |
-| `CORS_ALLOW_ORIGIN` | CORS 允许的 Origin | `*`（允许所有） |
+| `CORS_ALLOW_ORIGIN` | CORS 允许的 Origin，支持逗号分隔多个源 | `*`（允许所有） |
 
 ```bash
 # 示例：自定义端口和 CORS
 NCM_HOST=127.0.0.1 NCM_PORT=8080 CORS_ALLOW_ORIGIN=http://localhost:5173 cargo run --features server --bin ncm-server
+
+# 示例：允许多个源
+CORS_ALLOW_ORIGIN=https://a.com,https://b.com cargo run --features server --bin ncm-server
 ```
 
 ### 前端调用示例
@@ -275,7 +310,7 @@ const res = await axios.get('/user/playlist', {
 如果你已有 Axum 项目，可以直接集成路由：
 
 ```rust
-use ncm_api::{create_client, server::{build_app, build_app_with_config, ServerConfig}};
+use ncm_api_rs::{create_client, server::{build_app, build_app_with_config, ServerConfig}};
 
 // 方式一：快速构建
 let app = build_app(create_client(None));
@@ -391,6 +426,7 @@ axum::serve(listener, app).await?;
 | `lyric` | 歌词 |
 | `lyric_new` | 逐字歌词 |
 | `like` | 喜欢音乐 |
+| `song_like` | 喜欢歌曲(新版) |
 | `likelist` | 喜欢的音乐列表 |
 | `song_like_check` | 歌曲是否喜爱 |
 | `scrobble` | 听歌打卡 |
@@ -423,6 +459,7 @@ axum::serve(listener, app).await?;
 | `search_hot` | 热搜列表(简略) |
 | `search_hot_detail` | 热搜列表(详细) |
 | `search_suggest` | 搜索建议 |
+| `search_suggest_pc` | 搜索建议(PC端) |
 | `search_multimatch` | 搜索多重匹配 |
 | `search_match` | 搜索匹配 |
 
@@ -480,6 +517,8 @@ axum::serve(listener, app).await?;
 | `comment_hot` | 热门评论 |
 | `comment_like` | 点赞评论 |
 | `comment_new` | 新版评论 |
+| `comment_reply` | 回复评论 |
+| `comment_delete` | 删除评论 |
 | `comment_hug_list` | 抱一抱列表 |
 | `comment_info_list` | 评论统计 |
 | `hug_comment` | 抱一抱评论 |
@@ -596,6 +635,11 @@ axum::serve(listener, app).await?;
 | `dj_toplist_newcomer` | 电台新人榜 |
 | `dj_toplist_pay` | 付费电台榜 |
 | `dj_toplist_popular` | 电台热门榜 |
+| `dj_difm_all_style_channel` | DIFM电台 - 分类 |
+| `dj_difm_channel_subscribe` | DIFM电台 - 收藏频道 |
+| `dj_difm_channel_unsubscribe` | DIFM电台 - 取消收藏频道 |
+| `dj_difm_playing_tracks_list` | DIFM电台 - 播放列表 |
+| `dj_difm_subscribe_channels_get` | DIFM电台 - 收藏列表 |
 | `dj_paygift` | 付费精品 |
 | `dj_today_perfered` | 今日优选 |
 | `dj_radio_top` | 电台排行 |
@@ -788,6 +832,7 @@ axum::serve(listener, app).await?;
 | `voice_lyric` | 音频歌词 |
 | `voicelist_list` | 声音列表 |
 | `voicelist_detail` | 声音列表详情 |
+| `voicelist_my_created` | 我创建的播客声音 |
 | `voicelist_search` | 搜索声音列表 |
 | `voicelist_list_search` | 搜索声音 |
 | `voicelist_trans` | 声音转换 |

@@ -1,5 +1,5 @@
 /// Error 类型测试
-use ncm_api::NcmError;
+use ncm_api_rs::NcmError;
 
 #[test]
 fn test_error_from_api_auth() {

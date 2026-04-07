@@ -1,5 +1,5 @@
 /// Query 参数提取和类型安全辅助方法测试
-use ncm_api::Query;
+use ncm_api_rs::Query;
 
 #[test]
 fn test_query_builder() {

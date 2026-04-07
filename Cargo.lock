@@ -823,7 +823,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ncm-api"
+name = "ncm-api-rs"
 version = "0.1.0"
 dependencies = [
  "aes",

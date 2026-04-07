@@ -1,7 +1,7 @@
 /// 集成测试 - 验证关键接口能正常请求网易云 API
 ///
 /// 注意：这些测试会发起真实网络请求，CI 环境中可能需要跳过
-use ncm_api::{create_client, Query};
+use ncm_api_rs::{create_client, Query};
 
 #[tokio::test]
 async fn test_banner() {

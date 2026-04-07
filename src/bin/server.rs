@@ -1,4 +1,4 @@
-use ncm_api::server::{start_server, ServerConfig};
+use ncm_api_rs::server::{start_server, ServerConfig};
 
 #[tokio::main]
 async fn main() {
@@ -7,7 +7,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "ncm_api=info".into()),
+                .unwrap_or_else(|_| "ncm_api_rs=info".into()),
         )
         .init();
 

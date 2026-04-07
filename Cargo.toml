@@ -1,5 +1,5 @@
 [package]
-name = "ncm-api"
+name = "ncm-api-rs"
 version = "0.1.0"
 edition = "2021"
 description = "Netease Cloud Music API Rust SDK"

@@ -1,7 +1,7 @@
 /// 搜索测试 - 打印原始响应查看数据
 ///
 /// 运行: cargo run --example search_test
-use ncm_api::{create_client, Query};
+use ncm_api_rs::{create_client, Query};
 
 #[tokio::main]
 async fn main() {
@@ -64,7 +64,7 @@ async fn main() {
         Err(e) => {
             eprintln!("❌ 搜索失败: {}", e);
             // 如果是 API 错误，尝试打印详细信息
-            if let ncm_api::NcmError::Api { code, msg } = &e {
+            if let ncm_api_rs::NcmError::Api { code, msg } = &e {
                 eprintln!("   code={}, msg={}", code, msg);
             }
         }
