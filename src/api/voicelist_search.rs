@@ -10,15 +10,16 @@ impl ApiClient {
     /// 对应 /voicelist/search
     pub async fn voicelist_search(&self, query: &Query) -> Result<ApiResponse> {
         let data = json!({
-            "fee": "-1",
-            "limit": query.get_or("limit", "200"),
-            "offset": query.get_or("offset", "0"),
-            "podcastName": query.get_or("podcastName", "")
+            "keyword": query.get_or("keyword", ""),
+            "scene": "normal",
+            "limit": query.get_or("limit", "10"),
+            "offset": query.get_or("offset", "30"),
+            "e_r": true
         });
         self.request(
-            "/api/voice/workbench/voicelist/search",
+            "/api/search/voicelist/get",
             data,
-            query.to_option(CryptoType::Eapi),
+            query.to_option(CryptoType::Weapi),
         )
         .await
     }

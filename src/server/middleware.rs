@@ -5,6 +5,7 @@ use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 /// 创建 CORS 中间件层
 ///
 /// - `origin`: 允许的 Origin，None 表示允许所有
+///   支持逗号分隔多个源，例如 `"https://a.com,https://b.com"`
 pub fn cors_layer(origin: Option<&str>) -> CorsLayer {
     let layer = CorsLayer::new()
         .allow_methods([
@@ -19,12 +20,31 @@ pub fn cors_layer(origin: Option<&str>) -> CorsLayer {
 
     match origin {
         Some(o) => {
-            if let Ok(val) = o.parse::<HeaderValue>() {
+            let origins: Vec<String> = o
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+
+            if origins.is_empty() || origins.iter().any(|s| s == "*") {
+                layer.allow_origin(Any)
+            } else if origins.len() == 1 {
+                if let Ok(val) = origins[0].parse::<HeaderValue>() {
+                    layer
+                        .allow_credentials(true)
+                        .allow_origin(AllowOrigin::exact(val))
+                } else {
+                    layer.allow_origin(Any)
+                }
+            } else {
                 layer
                     .allow_credentials(true)
-                    .allow_origin(AllowOrigin::exact(val))
-            } else {
-                layer.allow_origin(Any)
+                    .allow_origin(AllowOrigin::predicate(move |value, _| {
+                        value
+                            .to_str()
+                            .map(|v| origins.iter().any(|o| o == v))
+                            .unwrap_or(false)
+                    }))
             }
         }
         None => layer.allow_origin(Any),
