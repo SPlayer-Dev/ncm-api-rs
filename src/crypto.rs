@@ -264,8 +264,24 @@ fn xeapi_mid_transform(ciphertext: &[u8]) -> Vec<u8> {
     out
 }
 
-fn xeapi_encrypt_s(dynamic_key: &[u8], pk: &XeapiPublicKey, os: &str) -> Result<Vec<u8>, String> {
+/// X25519 临时密钥协商，返回 (临时公钥, 共享密钥)
+fn x25519_ephemeral_agree(peer: [u8; 32]) -> ([u8; 32], [u8; 32]) {
+    let secret = x25519_dalek::EphemeralSecret::random_from_rng(rand::rngs::OsRng);
+    let ephemeral = x25519_dalek::PublicKey::from(&secret);
+    let shared = secret.diffie_hellman(&x25519_dalek::PublicKey::from(peer));
+    (ephemeral.to_bytes(), shared.to_bytes())
+}
+
+/// AES-128-GCM 加密，输出 密文 + 16 字节 tag
+fn aes128_gcm_seal(key: &[u8], iv: &[u8; 12], plaintext: &[u8]) -> Result<Vec<u8>, String> {
     use aes_gcm::aead::{Aead, KeyInit as _};
+    let cipher = aes_gcm::Aes128Gcm::new_from_slice(key).map_err(|e| e.to_string())?;
+    cipher
+        .encrypt(iv.into(), plaintext)
+        .map_err(|e| e.to_string())
+}
+
+fn xeapi_encrypt_s(dynamic_key: &[u8], pk: &XeapiPublicKey, os: &str) -> Result<Vec<u8>, String> {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
 
@@ -274,24 +290,19 @@ fn xeapi_encrypt_s(dynamic_key: &[u8], pk: &XeapiPublicKey, os: &str) -> Result<
         .map_err(|e| e.to_string())?
         .try_into()
         .map_err(|_| "invalid x25519 public key".to_string())?;
-    let secret = x25519_dalek::EphemeralSecret::random_from_rng(rand::rngs::OsRng);
-    let ephemeral = x25519_dalek::PublicKey::from(&secret);
-    let shared = secret.diffie_hellman(&x25519_dalek::PublicKey::from(peer));
+    let (ephemeral, shared) = x25519_ephemeral_agree(peer);
 
     // HKDF-SHA256(salt = 0^32)，取前 16 字节
-    let prk = hmac_sha256(&[0u8; 32], shared.as_bytes());
-    let mut info = ephemeral.as_bytes().to_vec();
+    let prk = hmac_sha256(&[0u8; 32], &shared);
+    let mut info = ephemeral.to_vec();
     info.push(1);
     let aes_key = &hmac_sha256(&prk, &info)[..16];
 
     let iv: [u8; 12] = rand::random();
     let plaintext = format!("{}|{}|{}", b64.encode(dynamic_key), os, pk.sk);
-    let cipher = aes_gcm::Aes128Gcm::new_from_slice(aes_key).map_err(|e| e.to_string())?;
-    let sealed = cipher
-        .encrypt((&iv).into(), plaintext.as_bytes())
-        .map_err(|e| e.to_string())?;
+    let sealed = aes128_gcm_seal(aes_key, &iv, plaintext.as_bytes())?;
 
-    let mut out = ephemeral.as_bytes().to_vec();
+    let mut out = ephemeral.to_vec();
     out.extend_from_slice(&iv);
     out.extend_from_slice(&sealed);
     Ok(out)
@@ -459,18 +470,24 @@ const NCBL_HEADER_FIXED_LEN: usize = 70;
 const NCBL_META_BLOCK_TYPE: u16 = 0x4343;
 const NCBL_MAX_FRAME: usize = 0x8000;
 
+/// NCBL 密钥包装：keyB = keyA^65537 mod N，左侧补 0 到 32 字节
+fn ncbl_wrap_key(key_a: &[u8; 32]) -> [u8; 32] {
+    let n = BigUint::parse_bytes(NCBL_RSA_N.as_bytes(), 16).unwrap();
+    let wrapped = BigUint::from_bytes_be(key_a)
+        .modpow(&BigUint::from(65537u32), &n)
+        .to_bytes_be();
+    let mut key_b = [0u8; 32];
+    key_b[32 - wrapped.len()..].copy_from_slice(&wrapped);
+    key_b
+}
+
 /// NCBL 加密：header(70) + meta 块（keyB 加密）+ 帧序列（keyA 加密的 zstd 压缩 body）
 pub fn ncbl_encrypt(meta: &[u8], body: &[u8]) -> Vec<u8> {
     let mut key_a: [u8; 32] = rand::random();
     if key_a[0] >= 0xa3 {
         key_a[0] = 0xa2;
     }
-    let n = BigUint::parse_bytes(NCBL_RSA_N.as_bytes(), 16).unwrap();
-    let wrapped = BigUint::from_bytes_be(&key_a)
-        .modpow(&BigUint::from(65537u32), &n)
-        .to_bytes_be();
-    let mut key_b = [0u8; 32];
-    key_b[32 - wrapped.len()..].copy_from_slice(&wrapped);
+    let key_b = ncbl_wrap_key(&key_a);
 
     let mut uuid: [u8; 16] = rand::random();
     uuid[6] = (uuid[6] & 0x0f) | 0x40;
@@ -529,22 +546,38 @@ pub struct NeapiKey {
 
 const NEAPI_MAGIC: &[u8] = b"CSJM";
 
+/// ChaCha20-Poly1305 加密，输出 密文 + 16 字节 tag
+fn chacha20poly1305_seal(
+    key: &[u8; 32],
+    nonce: &[u8; 12],
+    aad: &[u8],
+    msg: &[u8],
+) -> Result<Vec<u8>, String> {
+    use chacha20poly1305::aead::{Aead, KeyInit as _, Payload};
+    chacha20poly1305::ChaCha20Poly1305::new(key.into())
+        .encrypt(nonce.into(), Payload { msg, aad })
+        .map_err(|e| e.to_string())
+}
+
+/// ChaCha20-Poly1305 解密并校验 tag
+fn chacha20poly1305_open(
+    key: &[u8; 32],
+    nonce: &[u8; 12],
+    aad: &[u8],
+    sealed: &[u8],
+) -> Result<Vec<u8>, String> {
+    use chacha20poly1305::aead::{Aead, KeyInit as _, Payload};
+    chacha20poly1305::ChaCha20Poly1305::new(key.into())
+        .decrypt(nonce.into(), Payload { msg: sealed, aad })
+        .map_err(|e| e.to_string())
+}
+
 /// neapi 加密：zstd 压缩 + ChaCha20-Poly1305，输出 Base64 容器
 pub fn neapi(data: &[u8], key: &NeapiKey) -> Result<String, String> {
     use base64::Engine;
-    use chacha20poly1305::aead::{Aead, KeyInit as _, Payload};
     let nonce: [u8; 12] = rand::random();
     let ad: [u8; 16] = rand::random();
-    let cipher = chacha20poly1305::ChaCha20Poly1305::new((&key.encrypt_key).into());
-    let sealed = cipher
-        .encrypt(
-            (&nonce).into(),
-            Payload {
-                msg: &zstd_compress(data),
-                aad: &ad,
-            },
-        )
-        .map_err(|e| e.to_string())?;
+    let sealed = chacha20poly1305_seal(&key.encrypt_key, &nonce, &ad, &zstd_compress(data))?;
 
     let mut out = NEAPI_MAGIC.to_vec();
     out.extend_from_slice(&key.version.to_be_bytes());
@@ -560,7 +593,6 @@ pub fn neapi(data: &[u8], key: &NeapiKey) -> Result<String, String> {
 /// neapi 响应解密
 pub fn neapi_res_decrypt(body: &str, key: &NeapiKey) -> Result<serde_json::Value, String> {
     use base64::Engine;
-    use chacha20poly1305::aead::{Aead, KeyInit as _, Payload};
     let raw = base64::engine::general_purpose::STANDARD
         .decode(body.trim())
         .map_err(|e| e.to_string())?;
@@ -573,20 +605,11 @@ pub fn neapi_res_decrypt(body: &str, key: &NeapiKey) -> Result<serde_json::Value
     let offset = 9 + nonce_len + ad_len;
     let sealed_len = u32::from_le_bytes(get(offset..offset + 4)?.try_into().unwrap()) as usize;
     let sealed = get(offset + 4..offset + 4 + sealed_len)?;
-    if nonce.len() != 12 {
-        return Err("invalid neapi nonce".into());
-    }
+    let nonce: &[u8; 12] = nonce
+        .try_into()
+        .map_err(|_| "invalid neapi nonce".to_string())?;
 
-    let cipher = chacha20poly1305::ChaCha20Poly1305::new((&key.decrypt_key).into());
-    let compressed = cipher
-        .decrypt(
-            nonce.into(),
-            Payload {
-                msg: sealed,
-                aad: ad,
-            },
-        )
-        .map_err(|e| e.to_string())?;
+    let compressed = chacha20poly1305_open(&key.decrypt_key, nonce, ad, sealed)?;
     let text = String::from_utf8_lossy(&zstd_decompress(&compressed)?).to_string();
     // 部分错误响应会把同一个 JSON 重复拼接两次
     serde_json::from_str(&text).or_else(|e| match text.find("}{") {
@@ -971,6 +994,130 @@ mod tests {
         let result = linuxapi(&obj);
         assert!(result.contains_key("eparams"));
         assert!(!result["eparams"].is_empty());
+    }
+
+    /// 已知答案测试：固定输入的输出须与依赖升级前逐字节一致
+    mod kat {
+        use super::super::*;
+
+        const TEXT: &[u8] = br#"{"id":123,"level":"standard"}"#;
+
+        #[test]
+        fn aes_cbc_base64() {
+            assert_eq!(
+                aes_cbc_encrypt_base64(TEXT, PRESET_KEY, IV),
+                "tV6ayG8gmrUelBXptDODGFgPPqb8YJW/EaYOB25Ha1E="
+            );
+        }
+
+        #[test]
+        fn aes_ecb_hex() {
+            let hex = aes_ecb_encrypt_hex(TEXT, EAPI_KEY);
+            assert_eq!(
+                hex,
+                "865ECC48530DAE3607DB7663E587EC08A494B03B8C312A035D6114CCAFE352FC"
+            );
+            assert_eq!(aes_ecb_decrypt_hex(&hex, EAPI_KEY).unwrap(), TEXT);
+        }
+
+        #[test]
+        fn aes_ecb_any_key_sizes() {
+            for (len, want) in [
+                (
+                    16u8,
+                    "c412898834a49d3a8fc40292947ce79d7dcddeefef6ec2a51d6b246bc9738b02",
+                ),
+                (
+                    24,
+                    "66704f9cdebb1fccc62a6e9353e003a585ea507a7b7454f5a92f35c10ff268b5",
+                ),
+                (
+                    32,
+                    "1601682e6bf55438fe0a27d487d17f9ff1ce90005e649b07d75c1551556df3c7",
+                ),
+            ] {
+                let key: Vec<u8> = (0..len).collect();
+                let ct = aes_ecb_encrypt_any(&key, TEXT).unwrap();
+                assert_eq!(hex::encode(&ct), want, "key len {len}");
+                assert_eq!(aes_ecb_decrypt_any(&key, &ct).unwrap(), TEXT);
+            }
+        }
+
+        #[test]
+        fn rsa_no_padding() {
+            assert_eq!(rsa_encrypt_no_padding(b"ponmlkjihgfedcba"), "d15a1683c992095d0c234c19966605c5c5964911268bbeda8cb8d08d834913e59d53b32358903a121b5fca784c1f5ae44951fd02524df58ecc98e52cc7cf8689b42c2e93ddf05b0592512d87f5960467e2f086c018849d76014d323500e30f13ef4cafbb0cf5a66731a3f1776c75ca35d0062dac70a3e33245afabcf47938487");
+        }
+
+        #[test]
+        fn eapi_params() {
+            let params = eapi("/api/song/detail", &serde_json::json!({"id": 123}));
+            assert_eq!(params["params"], "7D398AA5036D61F11B22021C618C242421D51F26B6A0246E121BFC7B69A3481F62C92B909AF39DBF41E3032D9B8D0AD4255A14BDCC5BC706FCD0882A2B24200CED6B7441C4CAA692CC4F3A374162751C8F60B959A222F7C46E6094FC8DF43285");
+        }
+
+        #[test]
+        fn linuxapi_eparams() {
+            let params = linuxapi(&serde_json::json!({"method": "POST", "url": "/api/x"}));
+            assert_eq!(params["eparams"], "A0D9583F4C5FF68DE851D2893A49DE98256E53720F315A26599EC273C87702D0E254137CD4DCFEF7E51A9955D586B94F");
+        }
+
+        #[test]
+        fn xeapi_sign_hmac() {
+            assert_eq!(
+                xeapi_sign("1700000000000", "0123456789012345"),
+                "Z9T+aFZBr0nWVV5WMzIyYWvtSQUx7ysC9WcxILLfs2c="
+            );
+        }
+
+        #[test]
+        fn aes128_gcm() {
+            let key: [u8; 16] = core::array::from_fn(|i| i as u8);
+            let iv: [u8; 12] = core::array::from_fn(|i| 0xa0 + i as u8);
+            let sealed = aes128_gcm_seal(&key, &iv, TEXT).unwrap();
+            assert_eq!(hex::encode(sealed), "d1a451df5cb30238b954976c2364d50c71d4017bf77653cb446215b93f0b7ddd0a3c685d8733c3bf77c2fb3d21");
+        }
+
+        #[test]
+        fn chacha20poly1305_rfc8439() {
+            // RFC 8439 2.8.2
+            let key: [u8; 32] = core::array::from_fn(|i| 0x80 + i as u8);
+            let nonce = [7, 0, 0, 0, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47];
+            let aad = [
+                0x50, 0x51, 0x52, 0x53, 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
+            ];
+            let msg: &[u8] = b"Ladies and Gentlemen of the class of '99: \
+If I could offer you only one tip for the future, sunscreen would be it.";
+            let sealed = chacha20poly1305_seal(&key, &nonce, &aad, msg).unwrap();
+            assert_eq!(
+                hex::encode(&sealed[..16]),
+                "d31a8d34648e60db7b86afbc53ef7ec2"
+            );
+            assert_eq!(
+                hex::encode(&sealed[msg.len()..]),
+                "1ae10b594f09e26a7e902ecbd0600691"
+            );
+            assert_eq!(
+                chacha20poly1305_open(&key, &nonce, &aad, &sealed).unwrap(),
+                msg
+            );
+        }
+
+        #[test]
+        fn ncbl_key_wrap() {
+            let key_a: [u8; 32] = core::array::from_fn(|i| 0x10 + i as u8);
+            assert_eq!(
+                hex::encode(ncbl_wrap_key(&key_a)),
+                "b9d5c4b5f40e117c168c77ecde65841890ee4f96d0cf320d6e2970b0610d6def"
+            );
+        }
+
+        #[test]
+        fn x25519_agree_uses_one_secret() {
+            // 对端取基点 u=9 时，共享密钥 = X25519(sk, 9) = 自己的临时公钥
+            let mut base = [0u8; 32];
+            base[0] = 9;
+            let (public, shared) = x25519_ephemeral_agree(base);
+            assert_eq!(public, shared);
+        }
     }
 
     #[test]
