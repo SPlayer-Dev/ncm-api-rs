@@ -244,13 +244,13 @@ impl ApiClient {
 
 /// 生成 UUID v4 风格的 dupkey
 fn generate_dupkey() -> String {
-    use rand::Rng;
+    use rand::RngExt;
     let hex_digits = b"0123456789abcdef";
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut s = [0u8; 36];
 
     for item in &mut s {
-        *item = hex_digits[rng.gen_range(0..16)];
+        *item = hex_digits[rng.random_range(0..16)];
     }
     s[14] = b'4';
     s[19] = hex_digits[((s[19] & 0x3) | 0x8) as usize];

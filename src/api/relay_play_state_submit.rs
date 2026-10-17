@@ -3,7 +3,7 @@ use crate::error::{NcmError, Result};
 /// 提交歌曲播放状态
 /// 对应 Node.js module/relay_play_state_submit.js
 use crate::request::{ApiClient, ApiResponse, CryptoType};
-use rand::Rng;
+use rand::RngExt;
 use serde_json::json;
 
 impl ApiClient {
@@ -21,9 +21,9 @@ impl ApiClient {
             .map(str::to_string)
             .unwrap_or_else(|| {
                 const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
                 (0..12)
-                    .map(|_| CHARS[rng.gen_range(0..36)] as char)
+                    .map(|_| CHARS[rng.random_range(0..36)] as char)
                     .collect()
             });
         let req = json!({

@@ -1,9 +1,9 @@
 /// IP 工具 - 随机中国 IP 生成
-use rand::Rng;
+use rand::RngExt;
 
 /// 生成随机中国 IP 地址（简化版，使用常见 IP 段）
 pub fn generate_random_chinese_ip() -> String {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // 常见中国 IP 段前缀
     let prefixes: &[(u8, u8, u8)] = &[
@@ -27,10 +27,10 @@ pub fn generate_random_chinese_ip() -> String {
         (223, 0, 255),
     ];
 
-    let (first, min_second, max_second) = prefixes[rng.gen_range(0..prefixes.len())];
-    let second = rng.gen_range(min_second..=max_second);
-    let third: u8 = rng.gen_range(1..=255);
-    let fourth: u8 = rng.gen_range(1..=254);
+    let (first, min_second, max_second) = prefixes[rng.random_range(0..prefixes.len())];
+    let second = rng.random_range(min_second..=max_second);
+    let third: u8 = rng.random_range(1..=255);
+    let fourth: u8 = rng.random_range(1..=254);
 
     format!("{}.{}.{}.{}", first, second, third, fourth)
 }

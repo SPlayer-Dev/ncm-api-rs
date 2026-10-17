@@ -5,15 +5,41 @@
 //! 一个命令要打多次上游时成倍变慢。这里改为：
 //! - 空闲连接 [`POOL_IDLE_TIMEOUT`] 后主动丢弃，先于服务端的 5 秒回收；
 //! - 仍撞上失效连接（请求发出后没拿到任何响应）时，[`send_with_retry`] 换一条连接再发一次。
+//!
+//! TLS 自带 rustls 配置（ring + 内置 webpki 根证书 + ALPN http/1.1），不依赖进程级默认加密后端；
+//! 只走 HTTP/1.1、不让 reqwest 自动协商压缩：同进程里别的库给 reqwest 开了 http2 / gzip 等
+//! 特性时，这里的请求行为也保持不变。
 
+use std::sync::Arc;
 use std::time::Duration;
 
 /// 空闲连接的保留时长：必须短于服务端约 5 秒的空闲回收。
 pub(crate) const POOL_IDLE_TIMEOUT: Duration = Duration::from_secs(4);
 
-/// HTTP 客户端构造器（连接复用 + 空闲回收）。
+/// HTTP 客户端构造器（连接复用 + 空闲回收）。所有 reqwest 客户端都必须由此创建。
 pub(crate) fn client_builder() -> reqwest::ClientBuilder {
-    reqwest::Client::builder().pool_idle_timeout(POOL_IDLE_TIMEOUT)
+    reqwest::Client::builder()
+        .tls_backend_preconfigured(tls_config())
+        .http1_only()
+        .no_gzip()
+        .no_brotli()
+        .no_deflate()
+        .no_zstd()
+        .pool_idle_timeout(POOL_IDLE_TIMEOUT)
+}
+
+fn tls_config() -> rustls::ClientConfig {
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let roots = rustls::RootCertStore {
+        roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+    };
+    let mut config = rustls::ClientConfig::builder_with_provider(provider)
+        .with_safe_default_protocol_versions()
+        .expect("ring supports the default TLS versions")
+        .with_root_certificates(roots)
+        .with_no_client_auth();
+    config.alpn_protocols = vec![b"http/1.1".to_vec()];
+    config
 }
 
 /// 失效连接导致的发送失败：请求发出前后连接被关 / 重置，没有拿到任何响应。

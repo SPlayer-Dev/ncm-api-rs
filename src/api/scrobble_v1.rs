@@ -6,7 +6,7 @@ use crate::error::Result;
 use crate::request::{ApiClient, ApiResponse};
 use crate::util::config::CL_DOMAIN3;
 use crate::util::cookie::cookie_to_json;
-use rand::Rng;
+use rand::RngExt;
 use serde_json::{json, Value};
 
 /// 从 cookie 提取的设备 / 认证上下文
@@ -184,11 +184,11 @@ impl ApiClient {
         let payload = ncbl_encrypt(ctx.meta_json().as_bytes(), body.as_bytes());
         let boundary = hex::encode(rand::random::<[u8; 16]>());
         let file_name = {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             format!(
                 "op_{}_0_{}",
-                rng.gen_range(10000..100000),
-                rng.gen_range(1..=u32::MAX as u64)
+                rng.random_range(10000..100000),
+                rng.random_range(1..=u32::MAX as u64)
             )
         };
         let mut multipart = format!(

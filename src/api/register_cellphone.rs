@@ -13,7 +13,7 @@ impl ApiClient {
     /// 注意: Node.js 版本会对密码做 MD5 处理
     pub async fn register_cellphone(&self, query: &Query) -> Result<ApiResponse> {
         let password = query.get("password").unwrap_or("");
-        let md5_password = format!("{:x}", Md5::digest(password.as_bytes()));
+        let md5_password = hex::encode(Md5::digest(password.as_bytes()));
         let data = json!({
             "captcha": query.get("captcha").unwrap_or(""),
             "phone": query.get("phone").unwrap_or(""),

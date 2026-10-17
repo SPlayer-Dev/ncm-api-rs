@@ -5,11 +5,10 @@
 /// - eapi: MD5 签名 + AES-128-ECB
 /// - linuxapi: AES-128-ECB
 /// - xeapi: AES-ECB + X25519/AES-GCM 会话密钥
-use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyInit, KeyIvInit};
+use aes::cipher::{block_padding::Pkcs7, BlockModeDecrypt, BlockModeEncrypt, KeyInit, KeyIvInit};
 use md5::{Digest, Md5};
-use rand::Rng;
-use rsa::traits::PublicKeyParts;
-use rsa::{BigUint, RsaPublicKey};
+use num_bigint::BigUint;
+use rand::RngExt;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -23,54 +22,44 @@ const LINUXAPI_KEY: &[u8] = b"rFgB&h#%2?^eDg:Q";
 const EAPI_KEY: &[u8] = b"e82ckenh8dichen8";
 const BASE62: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-// RSA 公钥 Base64 编码的 DER 数据（PKCS#8 / SubjectPublicKeyInfo 格式）
-const PUBLIC_KEY_DER_B64: &str = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB";
+// weapi RSA 公钥（1024 位，e = 65537）的模数 n，取自其 SubjectPublicKeyInfo DER：
+// MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB
+const WEAPI_RSA_N: &str = "e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7";
 
 /// AES-128-CBC 加密，输出 Base64
 fn aes_cbc_encrypt_base64(plaintext: &[u8], key: &[u8], iv: &[u8]) -> String {
-    let cipher = Aes128CbcEnc::new(key.into(), iv.into());
-    let ciphertext = cipher.encrypt_padded_vec_mut::<Pkcs7>(plaintext);
+    let cipher = Aes128CbcEnc::new_from_slices(key, iv).expect("AES-128 key / iv length");
+    let ciphertext = cipher.encrypt_padded_vec::<Pkcs7>(plaintext);
     base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &ciphertext)
 }
 
 /// AES-128-ECB 加密，输出大写 Hex
 fn aes_ecb_encrypt_hex(plaintext: &[u8], key: &[u8]) -> String {
-    let cipher = Aes128EcbEnc::new(key.into());
-    let ciphertext = cipher.encrypt_padded_vec_mut::<Pkcs7>(plaintext);
+    let cipher = Aes128EcbEnc::new_from_slice(key).expect("AES-128 key length");
+    let ciphertext = cipher.encrypt_padded_vec::<Pkcs7>(plaintext);
     hex::encode_upper(&ciphertext)
 }
 
 /// AES-128-ECB 解密（输入大写 Hex）
 fn aes_ecb_decrypt_hex(ciphertext_hex: &str, key: &[u8]) -> Result<Vec<u8>, String> {
     let ciphertext = hex::decode(ciphertext_hex).map_err(|e| e.to_string())?;
-    let cipher = Aes128EcbDec::new(key.into());
+    let cipher = Aes128EcbDec::new_from_slice(key).expect("AES-128 key length");
     cipher
-        .decrypt_padded_vec_mut::<Pkcs7>(&ciphertext)
+        .decrypt_padded_vec::<Pkcs7>(&ciphertext)
         .map_err(|e| e.to_string())
 }
 
 /// RSA 加密（NONE / raw / textbook RSA，无 padding）
 /// 对应 Node.js: forge.publicKey.encrypt(str, 'NONE')
 fn rsa_encrypt_no_padding(plaintext: &[u8]) -> String {
-    use base64::Engine;
-    use rsa::pkcs8::DecodePublicKey;
-
-    let der_bytes = base64::engine::general_purpose::STANDARD
-        .decode(PUBLIC_KEY_DER_B64)
-        .expect("Failed to decode RSA public key base64");
-
-    let public_key =
-        RsaPublicKey::from_public_key_der(&der_bytes).expect("Failed to parse RSA public key DER");
-
-    let n = public_key.n().clone();
-    let e = public_key.e().clone();
+    let n = BigUint::parse_bytes(WEAPI_RSA_N.as_bytes(), 16).unwrap();
 
     // Textbook RSA: c = m^e mod n
     let m = BigUint::from_bytes_be(plaintext);
-    let c = m.modpow(&e, &n);
+    let c = m.modpow(&BigUint::from(65537u32), &n);
 
     // 输出固定长度 hex（与模数等长，256 hex chars for 1024-bit key）
-    let n_bytes = n.bits() / 8;
+    let n_bytes = (n.bits() / 8) as usize;
     let c_bytes = c.to_bytes_be();
 
     // 左侧填充 0
@@ -83,11 +72,11 @@ fn rsa_encrypt_no_padding(plaintext: &[u8]) -> String {
 /// 双层 AES-128-CBC + RSA 加密随机密钥
 pub fn weapi(object: &serde_json::Value) -> HashMap<String, String> {
     let text = serde_json::to_string(object).unwrap();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // 生成 16 位随机密钥
     let secret_key: String = (0..16)
-        .map(|_| BASE62[rng.gen_range(0..62)] as char)
+        .map(|_| BASE62[rng.random_range(0..62)] as char)
         .collect();
 
     // 第一层 AES-CBC：preset_key + iv
@@ -122,7 +111,7 @@ pub fn linuxapi(object: &serde_json::Value) -> HashMap<String, String> {
 pub fn eapi(url: &str, object: &serde_json::Value) -> HashMap<String, String> {
     let text = serde_json::to_string(object).unwrap();
     let message = format!("nobody{}use{}md5forencrypt", url, text);
-    let digest = format!("{:x}", Md5::digest(message.as_bytes()));
+    let digest = hex::encode(Md5::digest(message.as_bytes()));
     let data = format!("{}-36cd479b6b5-{}-36cd479b6b5-{}", url, text, digest);
 
     let mut result = HashMap::new();
@@ -197,32 +186,38 @@ fn de_string_or_number<'de, D: serde::Deserializer<'de>>(d: D) -> Result<String,
 /// 按密钥长度选择 AES-128/192/256-ECB 加密（PKCS7）
 fn aes_ecb_encrypt_any(key: &[u8], plaintext: &[u8]) -> Result<Vec<u8>, String> {
     Ok(match key.len() {
-        16 => ecb::Encryptor::<aes::Aes128>::new(key.into())
-            .encrypt_padded_vec_mut::<Pkcs7>(plaintext),
-        24 => ecb::Encryptor::<aes::Aes192>::new(key.into())
-            .encrypt_padded_vec_mut::<Pkcs7>(plaintext),
-        32 => ecb::Encryptor::<aes::Aes256>::new(key.into())
-            .encrypt_padded_vec_mut::<Pkcs7>(plaintext),
+        16 => ecb::Encryptor::<aes::Aes128>::new_from_slice(key)
+            .expect("key length checked")
+            .encrypt_padded_vec::<Pkcs7>(plaintext),
+        24 => ecb::Encryptor::<aes::Aes192>::new_from_slice(key)
+            .expect("key length checked")
+            .encrypt_padded_vec::<Pkcs7>(plaintext),
+        32 => ecb::Encryptor::<aes::Aes256>::new_from_slice(key)
+            .expect("key length checked")
+            .encrypt_padded_vec::<Pkcs7>(plaintext),
         n => return Err(format!("invalid aes key length: {}", n)),
     })
 }
 
 fn aes_ecb_decrypt_any(key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>, String> {
     let r = match key.len() {
-        16 => ecb::Decryptor::<aes::Aes128>::new(key.into())
-            .decrypt_padded_vec_mut::<Pkcs7>(ciphertext),
-        24 => ecb::Decryptor::<aes::Aes192>::new(key.into())
-            .decrypt_padded_vec_mut::<Pkcs7>(ciphertext),
-        32 => ecb::Decryptor::<aes::Aes256>::new(key.into())
-            .decrypt_padded_vec_mut::<Pkcs7>(ciphertext),
+        16 => ecb::Decryptor::<aes::Aes128>::new_from_slice(key)
+            .expect("key length checked")
+            .decrypt_padded_vec::<Pkcs7>(ciphertext),
+        24 => ecb::Decryptor::<aes::Aes192>::new_from_slice(key)
+            .expect("key length checked")
+            .decrypt_padded_vec::<Pkcs7>(ciphertext),
+        32 => ecb::Decryptor::<aes::Aes256>::new_from_slice(key)
+            .expect("key length checked")
+            .decrypt_padded_vec::<Pkcs7>(ciphertext),
         n => return Err(format!("invalid aes key length: {}", n)),
     };
     r.map_err(|e| e.to_string())
 }
 
 fn hmac_sha256(key: &[u8], data: &[u8]) -> Vec<u8> {
-    use hmac::Mac;
-    let mut mac = <hmac::Hmac<sha2::Sha256> as Mac>::new_from_slice(key).expect("hmac key");
+    use hmac::{KeyInit as _, Mac};
+    let mut mac = hmac::Hmac::<sha2::Sha256>::new_from_slice(key).expect("hmac key");
     mac.update(data);
     mac.finalize().into_bytes().to_vec()
 }
@@ -266,7 +261,8 @@ fn xeapi_mid_transform(ciphertext: &[u8]) -> Vec<u8> {
 
 /// X25519 临时密钥协商，返回 (临时公钥, 共享密钥)
 fn x25519_ephemeral_agree(peer: [u8; 32]) -> ([u8; 32], [u8; 32]) {
-    let secret = x25519_dalek::EphemeralSecret::random_from_rng(rand::rngs::OsRng);
+    let mut os_rng = rand::rand_core::UnwrapErr(rand::rngs::SysRng);
+    let secret = x25519_dalek::EphemeralSecret::random_from_rng(&mut os_rng);
     let ephemeral = x25519_dalek::PublicKey::from(&secret);
     let shared = secret.diffie_hellman(&x25519_dalek::PublicKey::from(peer));
     (ephemeral.to_bytes(), shared.to_bytes())
@@ -453,7 +449,8 @@ pub(crate) fn zstd_decompress(data: &[u8]) -> Result<Vec<u8>, String> {
 /// IETF ChaCha20（32 位块计数器 + 12 字节 nonce）
 fn chacha20_xor(key: &[u8; 32], counter: u32, nonce: &[u8], data: &[u8]) -> Vec<u8> {
     use chacha20::cipher::{KeyIvInit, StreamCipher, StreamCipherSeek};
-    let mut c = chacha20::ChaCha20::new(key.into(), nonce.into());
+    let nonce = nonce.try_into().expect("ChaCha20 nonce must be 12 bytes");
+    let mut c = chacha20::ChaCha20::new(key.into(), nonce);
     c.seek(counter as u64 * 64);
     let mut out = data.to_vec();
     c.apply_keystream(&mut out);
@@ -623,7 +620,7 @@ pub use neapi_config::decode_config as neapi_decode_config;
 /// neapi 配置解析：RSA 解出 RC4 密钥 → zstd 解压出 ECFG 容器 → 从混淆的 Lua 字节码中提取密钥
 mod neapi_config {
     use super::NeapiKey;
-    use rsa::BigUint;
+    use num_bigint::BigUint;
 
     /// 512 位 RSA 公钥模数（PKCS#1 DER 中的 n）
     const CONFIG_N: &str = "e4e79c1cb27a9fab7d2c740e99e923ec51c009169ec3a380c60404e01b060f0160cdc631d9fb7fe53b228a5ff11bee42b965d28c6c2036193f4ccdc7ed853d11";
