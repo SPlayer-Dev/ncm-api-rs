@@ -29,6 +29,18 @@ const EXCLUDED_MODULES: &[&str] = &[
     "cloud_upload_complete", // -> cloud_upload_complete_info, cloud_upload_complete_pub
 ];
 
+/// 与 Node.js 文件名不一致的方法（Node 文件名含驼峰或连字符），额外注册上游路径
+const EXTRA_ROUTES: &[(&str, &str)] = &[
+    ("digital_album_detail", "/digitalAlbum/detail"),
+    ("digital_album_ordering", "/digitalAlbum/ordering"),
+    ("digital_album_purchased", "/digitalAlbum/purchased"),
+    ("digital_album_sales", "/digitalAlbum/sales"),
+    ("dj_radio_top", "/djRadio/top"),
+    ("verify_get_qr", "/verify/getQr"),
+    ("rep_ugc_user_collect_vip", "/rep/ugc/user/collect-vip"),
+    ("personal_fm_mode", "/personal/fm/mode"),
+];
+
 fn method_to_route(method: &str) -> String {
     if SPECIAL_ROUTES.contains(&method) {
         format!("/{}", method)
@@ -71,6 +83,12 @@ fn main() {
     for method in methods.iter() {
         let route = method_to_route(method);
         writeln!(f, "    {} => \"{}\",", method, route).unwrap();
+    }
+
+    for (method, route) in EXTRA_ROUTES {
+        if methods.iter().any(|m| m == method) {
+            writeln!(f, "    {} => \"{}\",", method, route).unwrap();
+        }
     }
 
     writeln!(f, ")").unwrap();

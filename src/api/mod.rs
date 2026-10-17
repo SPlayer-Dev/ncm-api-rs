@@ -2,17 +2,23 @@
 ///
 /// 每个 API 接口拆分为独立文件，通过 `impl ApiClient` 扩展方法
 /// 所有方法统一使用 `Query` 对象传参
-use crate::request::{CryptoType, RequestOption};
+use crate::request::{CheckToken, CryptoType, RequestOption};
 use std::collections::HashMap;
 
 // ---- 歌曲相关 ----
 mod check_music;
 mod like;
+mod like_v1;
 mod likelist;
 mod lyric;
 mod lyric_new;
+mod relay_play_state_submit;
 mod scrobble;
+mod scrobble_v1;
 mod song_chorus;
+mod song_cloud_download;
+mod song_copyright_rcmd;
+mod song_creators;
 mod song_detail;
 mod song_downlist;
 mod song_download_url;
@@ -29,12 +35,14 @@ mod song_music_detail;
 mod song_order_update;
 mod song_purchased;
 mod song_red_count;
+mod song_simi_get;
 mod song_singledownlist;
 mod song_url;
 mod song_url_match;
 mod song_url_ncmget;
 mod song_url_v1;
 mod song_url_v1_302;
+mod song_wiki_info;
 mod song_wiki_summary;
 
 // ---- 搜索相关 ----
@@ -92,12 +100,18 @@ mod artist_list;
 mod artist_mv;
 mod artist_new_mv;
 mod artist_new_song;
+mod artist_new_song_mv_list_v2;
+mod artist_new_song_playall;
 mod artist_songs;
 mod artist_sub;
 mod artist_sublist;
 mod artist_top_song;
 mod artist_video;
 mod artists;
+mod fans_group_detail;
+mod fans_group_feed_recommend;
+mod fans_group_user_group_detail;
+mod fans_group_user_groups;
 
 // ---- 专辑相关 ----
 mod album;
@@ -114,6 +128,7 @@ mod album_sublist;
 
 // ---- 评论相关 ----
 mod comment;
+mod comment_add;
 mod comment_album;
 mod comment_delete;
 mod comment_dj;
@@ -126,8 +141,9 @@ mod comment_like;
 mod comment_music;
 mod comment_mv;
 mod comment_new;
-mod comment_reply;
 mod comment_playlist;
+mod comment_reply;
+mod comment_report;
 mod comment_video;
 
 // ---- 推荐相关 ----
@@ -140,12 +156,21 @@ mod personalized_newsong;
 mod personalized_privatecontent;
 mod personalized_privatecontent_list;
 mod program_recommend;
+mod recommend_category_configs;
+mod recommend_category_set;
+mod recommend_category_songs;
 mod recommend_resource;
 mod recommend_songs;
 mod recommend_songs_dislike;
+mod recommend_songs_v1;
 
 // ---- 登录相关 ----
 mod activate_init_profile;
+mod captcha_safe_sent;
+mod captcha_sent_v1;
+mod device_kickoff;
+mod device_list;
+mod deviceinfo_center_upload;
 mod login;
 mod login_cellphone;
 mod login_qr_check;
@@ -156,6 +181,9 @@ mod login_status;
 mod logout;
 mod register_anonimous;
 mod register_cellphone;
+mod register_checktoken_v3;
+mod register_neapikey;
+mod register_xeapikey;
 
 // ---- 验证相关 ----
 mod captcha_sent;
@@ -203,6 +231,7 @@ mod user_update;
 mod fm_trash;
 mod personal_fm;
 mod personal_fm_mode;
+mod radio_sport_get;
 
 // ---- Banner ----
 mod banner;
@@ -262,6 +291,8 @@ mod simi_song;
 mod simi_user;
 
 // ---- 排行榜 ----
+mod chart_detail;
+mod chart_song_detail;
 mod top_album;
 mod top_artists;
 mod top_list;
@@ -297,6 +328,8 @@ mod msg_recentcontact;
 mod event;
 mod event_del;
 mod event_forward;
+mod event_privacy;
+mod user_event_all;
 
 // ---- 发送/分享 ----
 mod send_album;
@@ -353,6 +386,7 @@ mod mlog_url;
 // ---- 听歌足迹 ----
 mod listen_data_realtime_report;
 mod listen_data_report;
+mod listen_data_song_play_rank;
 mod listen_data_today_song;
 mod listen_data_total;
 mod listen_data_year_report;
@@ -398,13 +432,19 @@ mod fanscenter_overview_get;
 mod fanscenter_trend_list;
 
 // ---- 声音相关 ----
+mod sati_resource_list;
+mod sati_resource_list_more;
+mod sati_resource_sub;
+mod sati_resource_sub_list;
+mod sati_tag_list;
+mod sati_timescene_resources_get;
 mod voice_delete;
 mod voice_detail;
 mod voice_lyric;
 mod voicelist_detail;
-mod voicelist_my_created;
 mod voicelist_list;
 mod voicelist_list_search;
+mod voicelist_my_created;
 mod voicelist_search;
 mod voicelist_trans;
 
@@ -429,11 +469,15 @@ mod listentogether_sync_playlist_get;
 mod vip_growthpoint;
 mod vip_growthpoint_details;
 mod vip_growthpoint_get;
+mod vip_growthpoint_getall;
 mod vip_info;
 mod vip_info_v2;
 mod vip_sign;
+mod vip_sign_detail;
+mod vip_sign_history;
 mod vip_sign_info;
 mod vip_tasks;
+mod vip_tasks_v1;
 mod vip_timemachine;
 
 // ---- 云贝相关 ----
@@ -445,6 +489,9 @@ mod yunbei_rcmd_song_history;
 mod yunbei_receipt;
 mod yunbei_sign;
 mod yunbei_task_finish;
+mod yunbei_task_finish_v1;
+mod yunbei_task_list_v1;
+mod yunbei_task_recommend_song;
 mod yunbei_tasks;
 mod yunbei_tasks_todo;
 mod yunbei_today;
@@ -458,9 +505,29 @@ mod cloud_upload_complete;
 mod cloud_upload_token;
 
 // ---- EAPI 工具 ----
+mod decrypt;
 mod eapi_decrypt;
 
+// ---- 云小编 ----
+mod middle_play_do_lottery;
+mod middle_play_lottery_remain_chance;
+mod rep_ugc_activity_collect;
+mod rep_ugc_activity_get;
+mod rep_ugc_exam_info_get;
+mod rep_ugc_exam_question_single_get;
+mod rep_ugc_exam_result_get;
+mod rep_ugc_exam_start;
+mod rep_ugc_exam_submit;
+mod rep_ugc_user_collect_vip;
+mod rep_ugc_user_get;
+mod rep_ugc_user_sign;
+mod rep_ugc_user_vip;
+mod thinktank_audit_resource_detail;
+mod thinktank_audit_resource_update;
+
 // ---- 其他 ----
+mod ad_get;
+mod ad_listening_rights;
 #[allow(clippy::module_inception)]
 mod api;
 mod batch;
@@ -469,6 +536,7 @@ mod homepage_block_page;
 mod homepage_dragon_ball;
 mod hug_comment;
 mod inner_version;
+mod lbs_city_code;
 mod pl_count;
 mod playmode_intelligence_list;
 mod playmode_song_vector;
@@ -496,7 +564,15 @@ pub struct Query {
     pub ua: Option<String>,
     pub e_r: Option<bool>,
     pub domain: Option<String>,
+    /// 额外请求头
+    pub headers: HashMap<String, String>,
+    /// 请求超时（毫秒）
+    pub timeout: Option<u64>,
 }
+
+/// 环境变量 ENABLE_RANDOM_CN_IP=true 时，randomCNIP 默认开启（显式传 false 可关闭）
+static ENABLE_RANDOM_CN_IP: std::sync::LazyLock<bool> =
+    std::sync::LazyLock::new(|| std::env::var("ENABLE_RANDOM_CN_IP").as_deref() == Ok("true"));
 
 impl Query {
     pub fn new() -> Self {
@@ -549,18 +625,50 @@ impl Query {
         }
     }
 
+    /// 构造带反作弊 token 的 RequestOption
+    pub(crate) fn to_option_token(
+        &self,
+        crypto: CryptoType,
+        check_token: CheckToken,
+    ) -> RequestOption {
+        RequestOption {
+            check_token,
+            ..self.to_option(crypto)
+        }
+    }
+
+    /// 覆盖 cookie 中的若干字段（如强制 os=android）
+    pub(crate) fn with_cookie(&self, overrides: &[(&str, &str)]) -> Query {
+        let mut map = crate::util::cookie::cookie_to_json(self.cookie.as_deref().unwrap_or(""));
+        for (k, v) in overrides {
+            map.insert(k.to_string(), v.to_string());
+        }
+        let mut q = self.clone();
+        q.cookie = Some(crate::util::cookie::cookie_obj_to_string(&map));
+        q
+    }
+
     /// 构造 RequestOption
+    ///
+    /// 与 Node.js 版一致，参数 `crypto` 可覆盖接口默认的加密方式
     pub(crate) fn to_option(&self, crypto: CryptoType) -> RequestOption {
         RequestOption {
-            crypto,
+            crypto: self
+                .get("crypto")
+                .filter(|s| !s.is_empty())
+                .map(CryptoType::from)
+                .unwrap_or(crypto),
             cookie: self.cookie.clone(),
             ua: self.ua.clone(),
             proxy: self.proxy.clone(),
             real_ip: self.real_ip.clone(),
-            random_cn_ip: self.random_cn_ip,
+            random_cn_ip: self.random_cn_ip
+                || (*ENABLE_RANDOM_CN_IP && self.get("randomCNIP") != Some("false")),
             e_r: self.e_r,
             domain: self.domain.clone(),
-            check_token: false,
+            check_token: CheckToken::None,
+            headers: self.headers.clone(),
+            timeout: self.timeout,
         }
     }
 }

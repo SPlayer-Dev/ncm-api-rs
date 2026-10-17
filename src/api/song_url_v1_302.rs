@@ -14,6 +14,11 @@ impl ApiClient {
     pub async fn song_url_v1_302(&self, query: &Query) -> Result<ApiResponse> {
         let id = query.get_or("id", "0");
         let level = query.get_or("level", "standard");
+        let query = &if level == "vivid" {
+            query.with_cookie(&[("os", "android"), ("appver", "9.5.61")])
+        } else {
+            query.clone()
+        };
 
         // 第一次请求: download url
         let data = json!({
@@ -33,7 +38,7 @@ impl ApiClient {
         let url = response
             .body
             .get("data")
-            .and_then(|d| d.get(0))
+            .and_then(|d| if d.is_array() { d.get(0) } else { Some(d) })
             .and_then(|item| item.get("url"))
             .and_then(|u| u.as_str())
             .map(|s| s.to_string());
@@ -54,6 +59,9 @@ impl ApiClient {
         });
         if level == "sky" {
             fallback_data["immerseType"] = json!("c51");
+        }
+        if level == "vivid" {
+            fallback_data["encodeType"] = json!("mp3");
         }
         let fallback = self
             .request(

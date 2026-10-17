@@ -12,11 +12,18 @@ impl ApiClient {
         let data = json!({
             "type": 3
         });
-        self.request(
-            "/api/login/qrcode/unikey",
-            data,
-            query.to_option(CryptoType::default()),
-        )
-        .await
+        let res = self
+            .request(
+                "/api/login/qrcode/unikey",
+                data,
+                query.to_option(CryptoType::default()),
+            )
+            .await?;
+        // 与 Node 版一致：包一层 data
+        Ok(ApiResponse {
+            status: 200,
+            body: json!({ "data": res.body, "code": 200 }),
+            cookie: res.cookie,
+        })
     }
 }

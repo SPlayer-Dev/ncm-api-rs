@@ -2,7 +2,7 @@ use super::Query;
 use crate::error::Result;
 /// 分享歌曲到动态
 /// 对应 Node.js module/share_resource.js
-use crate::request::{ApiClient, ApiResponse, CryptoType};
+use crate::request::{ApiClient, ApiResponse, CheckToken, CryptoType};
 use serde_json::json;
 
 impl ApiClient {
@@ -17,7 +17,7 @@ impl ApiClient {
         self.request(
             "/api/share/friends/resource",
             data,
-            query.to_option(CryptoType::default()),
+            query.to_option_token(CryptoType::Xeapi, CheckToken::V3),
         )
         .await
     }

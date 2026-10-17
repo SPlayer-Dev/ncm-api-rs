@@ -13,11 +13,17 @@ impl ApiClient {
             "key": query.get_or("key", ""),
             "type": 3
         });
-        self.request(
-            "/api/login/qrcode/client/login",
-            data,
-            query.to_option(CryptoType::default()),
-        )
-        .await
+        let mut res = self
+            .request(
+                "/api/login/qrcode/client/login",
+                data,
+                query.to_option(CryptoType::default()),
+            )
+            .await?;
+        // 与 Node 版一致：把 set-cookie 拼接后放进 body.cookie（803 授权成功时即登录 cookie）
+        if let Some(obj) = res.body.as_object_mut() {
+            obj.insert("cookie".to_string(), json!(res.cookie.join(";")));
+        }
+        Ok(res)
     }
 }

@@ -64,8 +64,8 @@ async fn main() {
         Err(e) => {
             eprintln!("❌ 搜索失败: {}", e);
             // 如果是 API 错误，尝试打印详细信息
-            if let ncm_api_rs::NcmError::Api { code, msg } = &e {
-                eprintln!("   code={}, msg={}", code, msg);
+            if let Some(code) = e.status_code() {
+                eprintln!("   code={}", code);
             }
         }
     }

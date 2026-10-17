@@ -14,7 +14,7 @@ impl ApiClient {
     pub async fn user_bindingcellphone(&self, query: &Query) -> Result<ApiResponse> {
         let password = if let Some(pw) = query.get("password") {
             if !pw.is_empty() {
-                format!("{:x}", Md5::digest(pw.as_bytes()))
+                hex::encode(Md5::digest(pw.as_bytes()))
             } else {
                 String::new()
             }

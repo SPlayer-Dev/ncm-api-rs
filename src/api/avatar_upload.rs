@@ -9,22 +9,16 @@ use crate::request::{ApiClient, ApiResponse, CryptoType};
 use serde_json::json;
 
 impl ApiClient {
-    /// 上传头像图片
-    ///
-    /// query 参数:
-    /// - `img_data`: 不通过 Query 传递，由专用参数传入
-    /// - `img_name`: 图片文件名
-    /// - `img_mimetype`: 图片 MIME 类型，默认 "image/jpeg"
-    ///
-    /// 此方法包含两步:
-    /// 1. 申请 NOS 上传 token
-    /// 2. 上传文件到 NOS
-    /// 3. 调用头像更新接口
-    pub async fn avatar_upload(&self, query: &Query, img_data: Vec<u8>) -> Result<ApiResponse> {
-        let img_name = query.get_or("img_name", "avatar.jpg");
-        let img_mimetype = query.get_or("img_mimetype", "image/jpeg");
-
-        // Step 1: 申请上传 token
+    /// 上传图片到 NOS，返回 (url_pre, imgId)
+    /// 对应 Node.js plugins/upload.js
+    pub(crate) async fn upload_image(
+        &self,
+        query: &Query,
+        img_name: &str,
+        img_mimetype: &str,
+        img_data: Vec<u8>,
+    ) -> Result<(String, serde_json::Value)> {
+        // 申请上传 token
         let token_data = json!({
             "bucket": "yyimgs",
             "ext": "jpg",
@@ -34,7 +28,6 @@ impl ApiClient {
             "return_body": "{\"code\":200,\"size\":\"$(ObjectSize)\"}",
             "type": "other"
         });
-
         let token_res = self
             .request(
                 "/api/nos/token/alloc",
@@ -42,28 +35,46 @@ impl ApiClient {
                 query.to_option(CryptoType::Weapi),
             )
             .await?;
-
         let result = &token_res.body["result"];
         let object_key = result["objectKey"].as_str().unwrap_or_default();
         let token = result["token"].as_str().unwrap_or_default();
-        let doc_id = result["docId"].clone();
 
-        // Step 2: 上传文件到 NOS
-        let upload_url = format!(
-            "https://nosup-hz1.127.net/yyimgs/{}?offset=0&complete=true&version=1.0",
-            object_key
-        );
-
+        // 上传文件到 NOS
         self.client
-            .post(&upload_url)
+            .post(format!(
+                "https://nosup-hz1.127.net/yyimgs/{}?offset=0&complete=true&version=1.0",
+                object_key
+            ))
             .header("x-nos-token", token)
-            .header("Content-Type", &img_mimetype)
+            .header("Content-Type", img_mimetype)
             .body(img_data)
             .send()
             .await
             .map_err(crate::error::NcmError::Http)?;
 
-        // Step 3: 更新头像
+        Ok((
+            format!("https://p1.music.126.net/{}", object_key),
+            result["docId"].clone(),
+        ))
+    }
+
+    /// 上传头像图片
+    ///
+    /// query 参数:
+    /// - `img_data`: 不通过 Query 传递，由专用参数传入
+    /// - `img_name`: 图片文件名
+    /// - `img_mimetype`: 图片 MIME 类型，默认 "image/jpeg"
+    ///
+    /// 先上传图片到 NOS，再调用头像更新接口
+    pub async fn avatar_upload(&self, query: &Query, img_data: Vec<u8>) -> Result<ApiResponse> {
+        let img_name = query.get_or("img_name", "avatar.jpg");
+        let img_mimetype = query.get_or("img_mimetype", "image/jpeg");
+
+        let (url_pre, doc_id) = self
+            .upload_image(query, &img_name, &img_mimetype, img_data)
+            .await?;
+
+        // 更新头像
         let update_data = json!({
             "imgid": doc_id
         });
@@ -77,7 +88,6 @@ impl ApiClient {
             .await?;
 
         // 合并结果
-        let url_pre = format!("https://p1.music.126.net/{}", object_key);
         let mut body = update_res.body.clone();
         if let Some(obj) = body.as_object_mut() {
             obj.insert("url_pre".to_string(), json!(url_pre));

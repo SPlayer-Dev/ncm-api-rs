@@ -3,6 +3,15 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 pub const API_DOMAIN: &str = "https://interface.music.163.com";
+pub const EAPI_DOMAIN: &str = "https://interfacepc.music.163.com";
+pub const XEAPI_DOMAIN: &str = "https://interface3.music.163.com";
+pub const NEAPI_DOMAIN: &str = "https://interface3.music.163.com";
+/// 客户端加密日志上报域名（scrobble_v1 使用）
+pub const CL_DOMAIN3: &str = "https://clientlog3.music.163.com";
+/// 客户端日志域名（scrobble 使用）
+pub const CL_DOMAIN: &str = "https://clientlog.music.163.com";
+/// 易盾 v3 token 接口
+pub const DUN_DOMAIN_V3: &str = "https://ac.dun.163yun.com";
 pub const DOMAIN: &str = "https://music.163.com";
 pub const ENCRYPT: bool = true;
 pub const ENCRYPT_RESPONSE: bool = false;
@@ -60,8 +69,16 @@ pub const OS_IPHONE: OsConfig = OsConfig {
     channel: "distribution",
 };
 
+pub const OS_OSX: OsConfig = OsConfig {
+    os: "osx",
+    appver: "3.1.10.5100",
+    osver: "15.5",
+    channel: "netease",
+};
+
 pub fn get_os_config(os_name: &str) -> &'static OsConfig {
     match os_name {
+        "osx" => &OS_OSX,
         "linux" => &OS_LINUX,
         "android" => &OS_ANDROID,
         "iphone" => &OS_IPHONE,
@@ -74,9 +91,9 @@ pub fn choose_user_agent(crypto: &str, ua_type: &str) -> &'static str {
     match (crypto, ua_type) {
         ("weapi", _) => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
         ("linuxapi", _) => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36",
-        ("api" | "eapi", "android") => "NeteaseMusic/9.1.65.240927161425(9001065);Dalvik/2.1.0 (Linux; U; Android 14; 23013RK75C Build/UKQ1.230804.001)",
+        ("api" | "eapi", "android") => "NeteaseMusic/9.5.61.260802021928(9005061);Dalvik/2.1.0 (Linux; U; Android 12; HBN-AL00 Build/cd737a2.0)",
         ("api" | "eapi", "iphone") => "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)",
-        ("api" | "eapi", _) => "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/3.0.18.203152",
+        ("api" | "eapi", _) => "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/3.1.29.205117",
         _ => "",
     }
 }

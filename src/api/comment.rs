@@ -2,7 +2,7 @@ use super::Query;
 use crate::error::Result;
 /// 发送/删除/回复评论
 /// 对应 Node.js module/comment.js
-use crate::request::{ApiClient, ApiResponse, CryptoType};
+use crate::request::{ApiClient, ApiResponse, CheckToken, CryptoType};
 use serde_json::json;
 
 impl ApiClient {
@@ -18,10 +18,12 @@ impl ApiClient {
             _ => "add",
         };
         let resource_type = query.get_or("type", "0");
-        let thread_id = crate::util::config::RESOURCE_TYPE_MAP
-            .get(resource_type.as_str())
-            .map(|prefix| format!("{}{}", prefix, query.get_or("id", "0")))
-            .unwrap_or_default();
+        let thread_id = match crate::util::config::RESOURCE_TYPE_MAP.get(resource_type.as_str()) {
+            // 动态评论直接使用 threadId
+            Some(&"A_EV_2_") => query.get_or("threadId", ""),
+            Some(prefix) => format!("{}{}", prefix, query.get_or("id", "0")),
+            None => String::new(),
+        };
         let mut data = json!({
             "threadId": thread_id
         });
@@ -41,7 +43,7 @@ impl ApiClient {
         self.request(
             &format!("/api/resource/comments/{}", action),
             data,
-            query.to_option(CryptoType::Weapi),
+            query.to_option_token(CryptoType::Eapi, CheckToken::Static),
         )
         .await
     }

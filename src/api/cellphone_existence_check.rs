@@ -16,7 +16,7 @@ impl ApiClient {
         self.request(
             "/api/cellphone/existence/check",
             data,
-            query.to_option(CryptoType::default()),
+            query.to_option(CryptoType::Eapi),
         )
         .await
     }

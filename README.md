@@ -25,7 +25,7 @@
 ## 特点
 
 - **纯 Rust 实现** - 无需 Node.js 运行时，独立编译部署
-- **完整加密支持** - 完整实现 weapi / eapi / linuxapi 三种加密方式
+- **完整加密支持** - 实现 weapi / eapi / linuxapi / xeapi / neapi 加密方式
 - **极低内存占用** - ~5MB vs Node.js ~50-100MB
 - **异步非阻塞** - 基于 tokio + reqwest 的异步请求
 - **300+ 开箱即用的 API 接口** - 与 Node.js 版本 1:1 对应
@@ -160,6 +160,15 @@ query.proxy = Some("socks5://127.0.0.1:1080".to_string());
 query.real_ip = Some("116.25.146.177".to_string());
 // 可选：使用随机中国 IP
 query.random_cn_ip = true;
+// 可选：覆盖 User-Agent / 请求域名 / 是否加密返回值
+query.ua = Some("MyUA".to_string());
+query.domain = Some("https://music.163.com".to_string());
+query.e_r = Some(true);
+// 可选：额外请求头、超时（毫秒）
+query.headers.insert("X-Test".to_string(), "1".to_string());
+query.timeout = Some(10_000);
+// 可选：覆盖接口默认加密方式（weapi / eapi / linuxapi / api / xeapi / neapi）
+let query = query.param("crypto", "neapi");
 
 // 读取参数
 query.get("id");              // Some("186016")
@@ -215,7 +224,8 @@ let result = client.song_url_v1(&query).await?;
 
 ### randomCNIP 参数
 
-也可以使用随机中国 IP 功能，无需手动指定 IP：
+也可以使用随机中国 IP 功能，无需手动指定 IP（与 Node.js 版一致，进程启动时生成一个随机中国 IP 并复用）。
+设置环境变量 `ENABLE_RANDOM_CN_IP=true` 后默认开启，显式传 `randomCNIP=false` 可关闭：
 
 ```rust
 let mut query = Query::new().param("id", "1969519579");
@@ -259,6 +269,9 @@ cargo build --release --features server --bin ncm-server
 | `NCM_HOST` | 监听地址 | `0.0.0.0` |
 | `NCM_PORT` | 监听端口 | `3000` |
 | `CORS_ALLOW_ORIGIN` | CORS 允许的 Origin，支持逗号分隔多个源 | `*`（允许所有） |
+| `ENABLE_RANDOM_CN_IP` | 为 `true` 时所有请求默认使用随机中国 IP | 关闭 |
+
+HTTP 请求中除业务参数外还支持：`cookie`、`realIP`、`randomCNIP`、`proxy`、`ua`、`domain`、`e_r`、`crypto`、`timeout`（毫秒）、`headers`（JSON 对象字符串）。
 
 ```bash
 # 示例：自定义端口和 CORS
@@ -941,6 +954,77 @@ axum::serve(listener, app).await?;
 | `verify_qrcodestatus` | 二维码状态 |
 
 </details>
+
+#### 上游同步新增（2026-10）
+
+| 方法名 | 说明 |
+|--------|------|
+| `ad_get` | 获取广告，并在 extra.reqId 中提取广告 req_id |
+| `ad_listening_rights` | 获取免费听时长状态 |
+| `artist_new_song_mv_list_v2` | 获取关注歌手的新歌曲和 MV |
+| `artist_new_song_playall` | 获取所有关注歌手最近的 50 首新歌 |
+| `captcha_safe_sent` | 发送安全验证码 |
+| `captcha_sent_v1` | 发送验证码 v1 |
+| `chart_detail` | 获取指定维度音乐排行榜详情 |
+| `chart_song_detail` | 获取指定维度音乐排行榜列表 |
+| `comment_add` | 发送评论 |
+| `comment_report` | 举报评论 |
+| `decrypt` | 通用解密 |
+| `device_kickoff` | 强制下线设备 |
+| `device_list` | 登录设备列表 |
+| `deviceinfo_center_upload` | 上报设备中心设备名称（「登录设备管理」中显示的名称） |
+| `event_privacy` | 修改本人动态的可见权限 |
+| `fans_group_detail` | 乐迷团详情 |
+| `fans_group_feed_recommend` | 乐迷团推荐笔记 |
+| `fans_group_user_group_detail` | 用户所处乐迷团详情 |
+| `fans_group_user_groups` | 当前登录用户加入的全部歌手乐迷团列表 |
+| `lbs_city_code` | 多级行政区划数据 |
+| `like_v1` | 红心与取消红心歌曲 v1 |
+| `listen_data_song_play_rank` | 听歌足迹 - 歌曲播放排行 (Top20) |
+| `middle_play_do_lottery` | 云小编每日抽奖 |
+| `middle_play_lottery_remain_chance` | 云小编抽奖剩余次数查询 |
+| `radio_sport_get` | 跑步漫游 |
+| `recommend_category_configs` | 每日风格推荐场景配置列表 |
+| `recommend_category_set` | 每日风格推荐场景配置设置 |
+| `recommend_category_songs` | 每日推荐风格歌曲 |
+| `recommend_songs_v1` | 每日推荐歌曲 v1 |
+| `register_checktoken_v3` | 实时获取易盾 v3 反作弊 token（不缓存） |
+| `register_neapikey` | 刷新 neapi 密钥配置 |
+| `register_xeapikey` | 重新向服务端申请 xeapi 公钥并刷新本地缓存 |
+| `relay_play_state_submit` | 提交歌曲播放状态 |
+| `rep_ugc_activity_collect` | 云小编领取任务积分 |
+| `rep_ugc_activity_get` | 云小编活动信息 |
+| `rep_ugc_exam_info_get` | 云小编考试状态 |
+| `rep_ugc_exam_question_single_get` | 云小编考试取题 |
+| `rep_ugc_exam_result_get` | 云小编考试结果 |
+| `rep_ugc_exam_start` | 云小编考试开始 |
+| `rep_ugc_exam_submit` | 云小编考试提交 |
+| `rep_ugc_user_collect_vip` | 云小编领取一日会员 |
+| `rep_ugc_user_get` | 云小编获取用户详情 |
+| `rep_ugc_user_sign` | 云小编每日签到 |
+| `rep_ugc_user_vip` | 云小编查询会员任务状态 |
+| `sati_resource_list` | 助眠解压 - 标签下资源列表 |
+| `sati_resource_list_more` | 助眠解压 - 同类推荐 |
+| `sati_resource_sub` | 助眠解压 - 收藏 |
+| `sati_resource_sub_list` | 助眠解压 - 收藏列表 |
+| `sati_tag_list` | 助眠解压 - 标签列表 |
+| `sati_timescene_resources_get` | 助眠解压 - 特定时间场景推荐资源 |
+| `scrobble_v1` | 听歌打卡（NCBL 加密版，仿桌面客户端 PLV/PLD 上报） |
+| `song_cloud_download` | 从云盘获取歌曲下载链接 |
+| `song_copyright_rcmd` | 灰色歌曲的其他版本推荐 |
+| `song_creators` | 歌曲创作者信息 |
+| `song_simi_get` | 插播相似歌曲 |
+| `song_wiki_info` | 歌曲百科 |
+| `thinktank_audit_resource_detail` | 云小编获取任务 |
+| `thinktank_audit_resource_update` | 云小编提交任务 |
+| `user_event_all` | 自动翻页获取当前登录用户可枚举的全部动态（按 id 去重） |
+| `vip_growthpoint_getall` | 一键领取所有会员成长值 |
+| `vip_sign_detail` | 黑胶乐签打卡详情 |
+| `vip_sign_history` | 黑胶乐签打卡历史 / 状态查询 |
+| `vip_tasks_v1` | 会员任务 - 新版 |
+| `yunbei_task_finish_v1` | 云贝广告任务 - 完成任务领取云贝 |
+| `yunbei_task_list_v1` | 云贝广告任务 - 查询今日任务状态 |
+| `yunbei_task_recommend_song` | 云贝广告任务 - 获取推荐歌曲 |
 
 ## 扩展接口
 

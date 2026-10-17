@@ -17,7 +17,8 @@ impl ApiClient {
     /// - `autoPublishText`: 自动发布文案
     /// - `description`: 描述
     /// - `voiceListId`: 声音列表 ID
-    /// - `coverImgId`: 封面图 ID
+    /// - `coverImgId`: 封面图 ID（传入 `cover_img` 时以上传结果为准）
+    /// - `img_name` / `img_mimetype`: 封面图片文件名 / MIME 类型（配合 `cover_img`）
     /// - `categoryId`: 分类 ID
     /// - `secondCategoryId`: 二级分类 ID
     /// - `composedSongs`: 关联歌曲 ID，逗号分隔
@@ -28,14 +29,31 @@ impl ApiClient {
     /// `file_name`: 原始文件名（如 "song.mp3"）
     /// `file_data`: 音频文件的完整二进制数据
     /// `file_mimetype`: MIME 类型，如 "audio/mpeg"
+    /// `cover_img`: 封面图片二进制数据（可选，对应 Node.js 的 imgFile）
     pub async fn voice_upload(
         &self,
         query: &Query,
         file_name: &str,
         file_data: Vec<u8>,
         file_mimetype: Option<&str>,
+        cover_img: Option<Vec<u8>>,
     ) -> Result<ApiResponse> {
         let mimetype = file_mimetype.unwrap_or("audio/mpeg");
+
+        // 有封面文件时先上传，拿到 imgId 作为 coverImgId
+        let cover_img_id = match cover_img {
+            Some(img) => {
+                self.upload_image(
+                    query,
+                    &query.get_or("img_name", "cover.jpg"),
+                    &query.get_or("img_mimetype", "image/jpeg"),
+                    img,
+                )
+                .await?
+                .1
+            }
+            None => json!(query.get_or("coverImgId", "")),
+        };
 
         // 提取文件扩展名
         let ext = file_name.rsplit('.').next().unwrap_or("mp3");
@@ -177,7 +195,7 @@ impl ApiClient {
             "autoPublishText": query.get_or("autoPublishText", ""),
             "description": query.get_or("description", ""),
             "voiceListId": query.get_or("voiceListId", ""),
-            "coverImgId": query.get_or("coverImgId", ""),
+            "coverImgId": cover_img_id,
             "dfsId": doc_id,
             "categoryId": query.get_or("categoryId", ""),
             "secondCategoryId": query.get_or("secondCategoryId", ""),
@@ -226,13 +244,13 @@ impl ApiClient {
 
 /// 生成 UUID v4 风格的 dupkey
 fn generate_dupkey() -> String {
-    use rand::Rng;
+    use rand::RngExt;
     let hex_digits = b"0123456789abcdef";
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut s = [0u8; 36];
 
     for item in &mut s {
-        *item = hex_digits[rng.gen_range(0..16)];
+        *item = hex_digits[rng.random_range(0..16)];
     }
     s[14] = b'4';
     s[19] = hex_digits[((s[19] & 0x3) | 0x8) as usize];

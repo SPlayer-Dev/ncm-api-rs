@@ -16,7 +16,7 @@ impl ApiClient {
             md5_pw.to_string()
         } else {
             let pw = query.get("password").unwrap_or("");
-            format!("{:x}", Md5::digest(pw.as_bytes()))
+            hex::encode(Md5::digest(pw.as_bytes()))
         };
         let data = json!({
             "type": "0",

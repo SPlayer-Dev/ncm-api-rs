@@ -13,7 +13,8 @@ impl ApiClient {
             "getcounts": true,
             "time": query.get_or("lasttime", "-1").parse::<i64>().unwrap_or(-1),
             "limit": query.get_or("limit", "30").parse::<i64>().unwrap_or(30),
-            "total": false
+            "total": false,
+            "fromRN": "true"
         });
         self.request(
             &format!("/api/event/get/{}", query.get_or("uid", "0")),

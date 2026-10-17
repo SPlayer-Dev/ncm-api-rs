@@ -15,11 +15,7 @@ impl ApiClient {
             "userid": query.get_or("uid", ""),
             "like": like
         });
-        self.request(
-            "/api/song/like",
-            data,
-            query.to_option(CryptoType::Weapi),
-        )
-        .await
+        self.request("/api/song/like", data, query.to_option(CryptoType::Weapi))
+            .await
     }
 }

@@ -1,4 +1,5 @@
 /// 错误类型定义
+use crate::request::ApiResponse;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -35,6 +36,13 @@ pub enum NcmError {
     #[error("Rate limited: {0}")]
     RateLimited(String),
 
+    /// 上游返回非 200（携带原始响应，HTTP 服务会原样返回 body，与 Node.js 版一致）
+    #[error("API error (status={}): {msg}", .response.status)]
+    Response {
+        msg: String,
+        response: Box<ApiResponse>,
+    },
+
     /// 其他错误
     #[error("{0}")]
     Unknown(String),
@@ -52,6 +60,34 @@ impl NcmError {
             400 => NcmError::InvalidParam(msg),
             503 => NcmError::RateLimited(msg),
             _ => NcmError::Api { code, msg },
+        }
+    }
+}
+
+impl NcmError {
+    /// 业务状态码（上游返回的 code，或按错误类型推断）
+    pub fn status_code(&self) -> Option<i64> {
+        match self {
+            NcmError::Response { response, .. } => Some(response.status),
+            NcmError::Api { code, .. } => Some(*code),
+            NcmError::AuthRequired(_) => Some(301),
+            NcmError::InvalidParam(_) => Some(400),
+            NcmError::RateLimited(_) => Some(503),
+            NcmError::Timeout(_) => Some(504),
+            _ => None,
+        }
+    }
+
+    /// 是否需要登录（code 301）
+    pub fn is_auth_required(&self) -> bool {
+        self.status_code() == Some(301)
+    }
+
+    /// 上游原始响应（仅 `Response` 变体）
+    pub fn response(&self) -> Option<&ApiResponse> {
+        match self {
+            NcmError::Response { response, .. } => Some(response),
+            _ => None,
         }
     }
 }

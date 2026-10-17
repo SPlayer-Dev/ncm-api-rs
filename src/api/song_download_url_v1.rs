@@ -14,6 +14,11 @@ impl ApiClient {
             "immerseType": "c51",
             "level": query.get_or("level", "standard")
         });
+        let query = if query.get("level") == Some("vivid") {
+            query.with_cookie(&[("os", "android"), ("appver", "9.5.61")])
+        } else {
+            query.clone()
+        };
         self.request(
             "/api/song/enhance/download/url/v1",
             data,

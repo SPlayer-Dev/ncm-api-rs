@@ -2,7 +2,7 @@ use super::Query;
 use crate::error::Result;
 /// 云贝签到
 /// 对应 Node.js module/yunbei_sign.js
-use crate::request::{ApiClient, ApiResponse, CryptoType};
+use crate::request::{ApiClient, ApiResponse, CheckToken, CryptoType};
 use serde_json::json;
 
 impl ApiClient {
@@ -13,7 +13,7 @@ impl ApiClient {
         self.request(
             "/api/pointmall/user/sign",
             data,
-            query.to_option(CryptoType::Weapi),
+            query.to_option_token(CryptoType::Xeapi, CheckToken::V3),
         )
         .await
     }

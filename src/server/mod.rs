@@ -154,7 +154,61 @@ async fn extract_merged_query(
         query.proxy = Some(proxy);
     }
 
+    // 6. 其余请求选项（对应 Node.js util/option.js）
+    // randomCNIP 保留在 params 中，供 ENABLE_RANDOM_CN_IP 判断显式的 false
+    query.random_cn_ip = query.get("randomCNIP") == Some("true");
+    if let Some(e_r) = query.params.remove("e_r") {
+        query.e_r = Some(e_r == "true");
+    }
+    if let Some(ua) = query.params.remove("ua").filter(|s| !s.is_empty()) {
+        query.ua = Some(ua);
+    }
+    if let Some(domain) = query.params.remove("domain").filter(|s| !s.is_empty()) {
+        query.domain = Some(domain);
+    }
+    if let Some(timeout) = query.params.remove("timeout") {
+        query.timeout = timeout.parse().ok();
+    }
+    if let Some(headers) = query.params.remove("headers") {
+        if let Ok(Value::Object(map)) = serde_json::from_str::<Value>(&headers) {
+            query.headers = map
+                .into_iter()
+                .map(|(k, v)| match v {
+                    Value::String(s) => (k, s),
+                    other => (k, other.to_string()),
+                })
+                .collect();
+        }
+    }
+
     query
+}
+
+/// 客户端 IP 透传（对应 Node.js server.js，trust proxy 开启）：
+/// 未显式传 realIP、未开启 randomCNIP 时，转发客户端 IP（优先 X-Forwarded-For）；
+/// 本机请求改用进程级随机中国 IP
+fn apply_client_ip(query: &mut Query, headers: &HeaderMap, peer: Option<std::net::IpAddr>) {
+    if query.real_ip.is_some() || query.random_cn_ip {
+        return;
+    }
+    let forwarded = headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(',').next())
+        .and_then(|v| v.trim().parse::<std::net::IpAddr>().ok());
+    let ip = match forwarded.or(peer) {
+        Some(std::net::IpAddr::V6(v6)) => v6
+            .to_ipv4_mapped()
+            .map(std::net::IpAddr::V4)
+            .unwrap_or(std::net::IpAddr::V6(v6)),
+        Some(ip) => ip,
+        None => return,
+    };
+    if ip.is_loopback() {
+        query.random_cn_ip = true;
+    } else {
+        query.real_ip = Some(ip.to_string());
+    }
 }
 
 // ============================================================
@@ -180,6 +234,17 @@ fn build_success_response(api_resp: ApiResponse) -> Response {
 /// 构建错误响应
 fn build_error_response(err: crate::error::NcmError) -> Response {
     use crate::error::NcmError;
+
+    // 上游错误：原样返回 body 和 cookie（与 Node.js 版一致，301 时 msg 改为「需要登录」）
+    if let NcmError::Response { response, .. } = err {
+        let mut resp = *response;
+        if resp.status == 301 {
+            if let Some(obj) = resp.body.as_object_mut() {
+                obj.insert("msg".into(), json!("需要登录"));
+            }
+        }
+        return build_success_response(resp);
+    }
 
     let (status, body) = match &err {
         NcmError::AuthRequired(msg) => (
@@ -217,9 +282,13 @@ fn build_error_response(err: crate::error::NcmError) -> Response {
 // ============================================================
 
 /// 通用 API 请求处理函数
+/// 客户端连接地址（服务以 `into_make_service_with_connect_info` 启动时可用）
+type Peer = Option<axum::Extension<axum::extract::ConnectInfo<std::net::SocketAddr>>>;
+
 async fn handle_api_request<F>(
     state: &AppState,
     headers: HeaderMap,
+    peer: Peer,
     uri: &axum::http::Uri,
     body: axum::body::Bytes,
     api_fn: F,
@@ -239,7 +308,8 @@ where
         .get(header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok());
 
-    let query = extract_merged_query(&headers, uri.query(), body, content_type).await;
+    let mut query = extract_merged_query(&headers, uri.query(), body, content_type).await;
+    apply_client_ip(&mut query, &headers, peer.map(|p| p.0 .0.ip()));
 
     match api_fn(&state.client, &query).await {
         Ok(resp) => {
@@ -266,16 +336,43 @@ macro_rules! api_routes {
         $(
             let router = router.route(
                 $route,
-                get(|State(state): State<AppState>, headers: HeaderMap, uri: axum::http::Uri| async move {
-                    handle_api_request(&state, headers, &uri, axum::body::Bytes::new(), |client, q| Box::pin(client.$method(q))).await
+                get(|State(state): State<AppState>, headers: HeaderMap, peer: Peer, uri: axum::http::Uri| async move {
+                    handle_api_request(&state, headers, peer, &uri, axum::body::Bytes::new(), |client, q| Box::pin(client.$method(q))).await
                 })
-                .post(|State(state): State<AppState>, headers: HeaderMap, uri: axum::http::Uri, body: axum::body::Bytes| async move {
-                    handle_api_request(&state, headers, &uri, body, |client, q| Box::pin(client.$method(q))).await
+                .post(|State(state): State<AppState>, headers: HeaderMap, peer: Peer, uri: axum::http::Uri, body: axum::body::Bytes| async move {
+                    handle_api_request(&state, headers, peer, &uri, body, |client, q| Box::pin(client.$method(q))).await
                 }),
             );
         )*
         router
     }};
+}
+
+/// 注册单条自定义路由（GET + POST），`$f` 签名同 `handle_api_request` 的 api_fn
+macro_rules! custom_route {
+    ($router:expr, $route:expr, $f:expr) => {
+        $router.route(
+            $route,
+            get(
+                |State(state): State<AppState>,
+                 headers: HeaderMap,
+                 peer: Peer,
+                 uri: axum::http::Uri| async move {
+                    handle_api_request(&state, headers, peer, &uri, axum::body::Bytes::new(), $f)
+                        .await
+                },
+            )
+            .post(
+                |State(state): State<AppState>,
+                 headers: HeaderMap,
+                 peer: Peer,
+                 uri: axum::http::Uri,
+                 body: axum::body::Bytes| async move {
+                    handle_api_request(&state, headers, peer, &uri, body, $f).await
+                },
+            ),
+        )
+    };
 }
 
 // ============================================================
@@ -294,6 +391,14 @@ fn register_routes(router: Router<AppState>) -> Router<AppState> {
     let router = router
         .route("/avatar/upload", post(upload::handle_avatar_upload))
         .route("/voice/upload", post(upload::handle_voice_upload));
+
+    // 非标准签名的方法（无 query / 同步方法）
+    let router = custom_route!(router, "/inner/version", |client, _q| Box::pin(
+        client.inner_version()
+    ));
+    let router = custom_route!(router, "/eapi/decrypt", |client, q| Box::pin(
+        std::future::ready(client.eapi_decrypt(q))
+    ));
 
     router
 }
@@ -364,7 +469,25 @@ pub fn build_app_with_config(client: ApiClient, config: &ServerConfig) -> Router
 
 /// 启动 HTTP 服务器
 pub async fn start_server(config: ServerConfig) {
-    let client = ApiClient::new(None);
+    let mut client = ApiClient::new(None);
+    // 与 Node.js 版启动时 generateConfig 一致：注册游客身份，未登录请求携带 MUSIC_A
+    match client.register_anonimous(&Query::new()).await {
+        Ok(resp) => {
+            let token = resp.cookie.iter().find_map(|c| {
+                c.split(';')
+                    .find_map(|kv| kv.trim().strip_prefix("MUSIC_A="))
+                    .map(str::to_string)
+            });
+            match token {
+                Some(token) => {
+                    tracing::info!("游客 token 注册成功");
+                    client.set_anonymous_token(token);
+                }
+                None => tracing::warn!("游客 token 注册未返回 MUSIC_A: {}", resp.body),
+            }
+        }
+        Err(e) => tracing::warn!("游客 token 注册失败: {}", e),
+    }
     let app = build_app_with_config(client, &config);
 
     let addr = format!("{}:{}", config.host, config.port);
@@ -374,5 +497,10 @@ pub async fn start_server(config: ServerConfig) {
 
     tracing::info!("NCM API Server listening on http://{}", addr);
 
-    axum::serve(listener, app).await.expect("Server error");
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .expect("Server error");
 }

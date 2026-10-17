@@ -31,6 +31,11 @@ pub async fn handle_avatar_upload(
                     .params
                     .insert("img_name".to_string(), fname.to_string());
             }
+            if let Some(ct) = field.content_type() {
+                query
+                    .params
+                    .insert("img_mimetype".to_string(), ct.to_string());
+            }
             match field.bytes().await {
                 Ok(bytes) => img_data = Some(bytes.to_vec()),
                 Err(e) => {
@@ -79,7 +84,8 @@ pub async fn handle_avatar_upload(
 /// Content-Type: multipart/form-data
 ///
 /// 表单字段:
-/// - `file`: 音频文件（必需）
+/// - `file` / `songFile`: 音频文件（必需）
+/// - `imgFile`: 封面图片（可选）
 /// - 其他文本字段作为 Query 参数
 pub async fn handle_voice_upload(
     State(state): State<AppState>,
@@ -89,6 +95,7 @@ pub async fn handle_voice_upload(
     let mut file_data: Option<Vec<u8>> = None;
     let mut file_name = String::from("audio.mp3");
     let mut file_mimetype: Option<String> = None;
+    let mut cover_img: Option<Vec<u8>> = None;
 
     while let Ok(Some(field)) = multipart.next_field().await {
         let name = field.name().unwrap_or("").to_string();
@@ -100,6 +107,26 @@ pub async fn handle_voice_upload(
             file_mimetype = field.content_type().map(|s| s.to_string());
             match field.bytes().await {
                 Ok(bytes) => file_data = Some(bytes.to_vec()),
+                Err(e) => {
+                    return build_error_response(crate::error::NcmError::Unknown(format!(
+                        "Failed to read upload data: {}",
+                        e
+                    )));
+                }
+            }
+        } else if name == "imgFile" {
+            if let Some(fname) = field.file_name() {
+                query
+                    .params
+                    .insert("img_name".to_string(), fname.to_string());
+            }
+            if let Some(ct) = field.content_type() {
+                query
+                    .params
+                    .insert("img_mimetype".to_string(), ct.to_string());
+            }
+            match field.bytes().await {
+                Ok(bytes) => cover_img = Some(bytes.to_vec()),
                 Err(e) => {
                     return build_error_response(crate::error::NcmError::Unknown(format!(
                         "Failed to read upload data: {}",
@@ -126,7 +153,13 @@ pub async fn handle_voice_upload(
     let start = std::time::Instant::now();
     match state
         .client
-        .voice_upload(&query, &file_name, data, file_mimetype.as_deref())
+        .voice_upload(
+            &query,
+            &file_name,
+            data,
+            file_mimetype.as_deref(),
+            cover_img,
+        )
         .await
     {
         Ok(resp) => {

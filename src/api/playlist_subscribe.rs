@@ -2,7 +2,7 @@ use super::Query;
 use crate::error::Result;
 /// 收藏/取消收藏歌单
 /// 对应 Node.js module/playlist_subscribe.js
-use crate::request::{ApiClient, ApiResponse, CryptoType};
+use crate::request::{ApiClient, ApiResponse, CheckToken, CryptoType};
 use serde_json::json;
 
 impl ApiClient {
@@ -17,7 +17,7 @@ impl ApiClient {
         self.request(
             &format!("/api/playlist/{}", path),
             data,
-            query.to_option(CryptoType::Eapi),
+            query.to_option_token(CryptoType::Eapi, CheckToken::Static),
         )
         .await
     }

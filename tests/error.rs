@@ -47,3 +47,18 @@ fn test_error_display() {
     let err = NcmError::Crypto("bad key".to_string());
     assert_eq!(err.to_string(), "Crypto error: bad key");
 }
+
+#[test]
+fn test_error_response_passthrough() {
+    let err = NcmError::Response {
+        msg: "需要登录".to_string(),
+        response: Box::new(ncm_api_rs::ApiResponse {
+            status: 301,
+            body: serde_json::json!({"code": 301, "message": "系统错误"}),
+            cookie: vec![],
+        }),
+    };
+    assert!(err.is_auth_required());
+    assert_eq!(err.status_code(), Some(301));
+    assert_eq!(err.response().unwrap().body["message"], "系统错误");
+}
